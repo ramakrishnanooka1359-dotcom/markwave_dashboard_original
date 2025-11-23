@@ -85,25 +85,6 @@ const UsersTab: React.FC = () => {
 
   return (
     <div style={{ padding: '1.5rem', position: 'relative' }}>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {users.map((user, index) => (
-          <li key={index} style={{ marginBottom: '1.5rem', background: '#fff', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', padding: '1.25rem' }}>
-            <div style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.5rem' }}>{user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim()}</div>
-            <div style={{ color: '#6b7280', marginBottom: '0.25rem' }}>Mobile: {user.mobile}</div>
-            <div style={{ color: user.verified ? '#16a34a' : '#92400e', fontWeight: 500, marginBottom: '0.5rem' }}>
-              Status: {user.verified ? 'Verified' : 'Pending'}
-            </div>
-            {!user.verified && (
-              <button
-                onClick={() => handleVerifyUser(user.mobile)}
-                style={{ color: '#2563eb', fontWeight: '500', cursor: 'pointer', background: 'none', border: '1px solid #2563eb', borderRadius: '4px', padding: '0.5rem 1rem' }}
-              >
-                Verify
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
       {/* Floating Plus Icon */}
       <button
         className="floating-create-icon"

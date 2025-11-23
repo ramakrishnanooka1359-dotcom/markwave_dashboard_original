@@ -4,7 +4,7 @@ import BuffaloTree from './BuffaloTree';
 import axios from 'axios';
 
 const UserTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'nonVerified' | 'existing' | 'tree'>('nonVerified');
+  const [activeTab, setActiveTab] = useState<'nonVerified' | 'existing' | 'tree' | 'products'>('nonVerified');
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     mobile: '',
@@ -13,8 +13,9 @@ const UserTabs: React.FC = () => {
     refered_by_mobile: '',
     refered_by_name: '',
   });
-  const [referralUsers, setReferralUsers] = useState([]);
-  const [existingCustomers, setExistingCustomers] = useState([]);
+  const [referralUsers, setReferralUsers] = useState<any[]>([]);
+  const [existingCustomers, setExistingCustomers] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchReferralUsers = async () => {
@@ -35,11 +36,25 @@ const UserTabs: React.FC = () => {
       }
     };
 
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/products');
+        // Extract products array from the response structure
+        const productsData = response.data?.products || [];
+        setProducts(productsData);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setProducts([]); // Clear products on error
+      }
+    };
+
     // Only fetch data for the user-related tabs. The 'tree' tab is client-side.
     if (activeTab === 'nonVerified') {
       fetchReferralUsers();
     } else if (activeTab === 'existing') {
       fetchExistingCustomers();
+    } else if (activeTab === 'products') {
+      fetchProducts();
     }
   }, [activeTab]);
 
@@ -91,13 +106,13 @@ const UserTabs: React.FC = () => {
           className={activeTab === 'nonVerified' ? 'active' : ''}
           onClick={() => setActiveTab('nonVerified')}
         >
-          Referral Users
+          Referral
         </button>
         <button
           className={activeTab === 'existing' ? 'active' : ''}
           onClick={() => setActiveTab('existing')}
         >
-          Existing Customers
+          Verified Users
         </button>
         <button
           className={activeTab === 'tree' ? 'active' : ''}
@@ -105,12 +120,18 @@ const UserTabs: React.FC = () => {
         >
           Buffalo Tree
         </button>
+        <button
+          className={activeTab === 'products' ? 'active' : ''}
+          onClick={() => setActiveTab('products')}
+        >
+          Products
+        </button>
       </div>
 
       <div className="tab-content">
         {activeTab === 'nonVerified' ? (
           <div>
-            <h2>Referral Users</h2>
+            <h2>Referrals</h2>
             <div className="table-container">
               <table className="user-table">
                 <thead>
@@ -142,18 +163,18 @@ const UserTabs: React.FC = () => {
           </div>
         ) : activeTab === 'existing' ? (
           <div>
-            <h2>Existing Customers</h2>
+            <h2>Verified Users</h2>
             <div className="table-container">
               <table className="user-table">
                 <thead>
                   <tr>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Mobile</th>
-                    <th>Form Filled</th>
-                    <th>Referred By</th>
-                    <th>Referrer Mobile</th>
-                    <th>Verified</th>
+                    <th style={{ whiteSpace: 'nowrap' }}>First Name</th>
+                    <th style={{ whiteSpace: 'nowrap' }}>Last Name</th>
+                    <th style={{ whiteSpace: 'nowrap' }}>Mobile</th>
+                    <th style={{ whiteSpace: 'nowrap' }}>Form Filled</th>
+                    <th style={{ whiteSpace: 'nowrap' }}>Referred By</th>
+                    <th style={{ whiteSpace: 'nowrap' }}>Referrer Mobile</th>
+                    <th style={{ whiteSpace: 'nowrap' }}>Verified</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -178,17 +199,131 @@ const UserTabs: React.FC = () => {
               </table>
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'tree' ? (
           <div>
             {/* Buffalo Tree tab content */}
-            {activeTab === 'tree' && (
+            <div style={{ padding: '1rem' }}>
+              <h2>Buffalo Family Tree</h2>
+              <div className="tree-wrapper">
+                {/* Render BuffaloTree component */}
+                <div id="buffalo-tree-root">
+                  <BuffaloTree />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div>
+            {/* Products tab content */}
+            {activeTab === 'products' && (
               <div style={{ padding: '1rem' }}>
-                <h2>Buffalo Family Tree</h2>
-                <div className="tree-wrapper">
-                  {/* Render BuffaloTree component */}
-                  <div id="buffalo-tree-root">
-                    <BuffaloTree />
-                  </div>
+                <h2>Products</h2>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+                  gap: '1.5rem', 
+                  marginTop: '1rem' 
+                }}>
+                  {products.length === 0 ? (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#888', padding: '2rem' }}>
+                      No products found
+                    </div>
+                  ) : (
+                    products.map((product: any, index: number) => (
+                      <div key={product.id || index} style={{ 
+                        background: '#fff', 
+                        borderRadius: '12px', 
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
+                        overflow: 'hidden',
+                        border: '1px solid #e5e7eb'
+                      }}>
+                        {/* Product Image */}
+                        {product.buffalo_images && product.buffalo_images.length > 0 && (
+                          <div style={{ position: 'relative', height: '200px', overflow: 'hidden' }}>
+                            <img 
+                              src={product.buffalo_images[0]} 
+                              alt={product.breed}
+                              style={{ 
+                                width: '100%', 
+                                height: '100%', 
+                                objectFit: 'cover' 
+                              }}
+                            />
+                            {!product.inStock && (
+                              <div style={{
+                                position: 'absolute',
+                                top: '8px',
+                                right: '8px',
+                                background: '#dc2626',
+                                color: 'white',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                fontWeight: '600'
+                              }}>
+                                Out of Stock
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Product Details */}
+                        <div style={{ padding: '1rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600', color: '#111' }}>
+                              {product.breed}
+                            </h3>
+                            <span style={{ 
+                              background: product.inStock ? '#10b981' : '#dc2626', 
+                              color: 'white', 
+                              padding: '2px 6px', 
+                              borderRadius: '4px', 
+                              fontSize: '12px',
+                              fontWeight: '500'
+                            }}>
+                              {product.inStock ? 'In Stock' : 'Out of Stock'}
+                            </span>
+                          </div>
+                          
+                          <div style={{ marginBottom: '0.75rem' }}>
+                            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>
+                              <strong>Age:</strong> {product.age} years
+                            </div>
+                            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>
+                              <strong>Location:</strong> {product.location}
+                            </div>
+                            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                              <strong>ID:</strong> {product.id}
+                            </div>
+                          </div>
+                          
+                          <p style={{ 
+                            fontSize: '0.875rem', 
+                            color: '#374151', 
+                            lineHeight: '1.4', 
+                            margin: '0 0 1rem 0',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}>
+                            {product.description}
+                          </p>
+                          
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#111' }}>
+                                ₹{product.price?.toLocaleString()}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                Insurance: ₹{product.insurance?.toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
