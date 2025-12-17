@@ -150,6 +150,17 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
     refered_by_mobile: '',
     refered_by_name: '',
   });
+
+  // Approval Modal State
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [approvingUnitId, setApprovingUnitId] = useState<string | null>(null);
+  const [approvalData, setApprovalData] = useState({
+    shedNumber: '',
+    farmName: '',
+    farmLocation: '',
+  });
+
+
   const [referralUsers, setReferralUsers] = useState<any[]>([]);
   const [existingCustomers, setExistingCustomers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -265,20 +276,44 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
     }
   };
 
-  const handleApprove = async (unitId: string) => {
-    if (!window.confirm('Are you sure you want to approve this order?')) return;
+  const handleApproveClick = (unitId: string) => {
+    setApprovingUnitId(unitId);
+    setApprovalData({
+      shedNumber: '',
+      farmName: '',
+      farmLocation: '',
+    });
+    setShowApproveModal(true);
+  };
+
+  const handleApprovalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setApprovalData({ ...approvalData, [name]: value });
+  };
+
+  const handleApproveSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!approvingUnitId) return;
+
     try {
-      await axios.post(API_ENDPOINTS.approveUnit(unitId), {}, {
+      await axios.post(API_ENDPOINTS.approveUnit(approvingUnitId), approvalData, {
         headers: {
           'X-Admin-Mobile': adminMobile,
         }
       });
       alert('Order approved successfully!');
+      setShowApproveModal(false);
+      setApprovingUnitId(null);
       fetchPendingUnits();
     } catch (error) {
       console.error('Error approving order:', error);
       alert('Failed to approve order.');
     }
+  };
+
+  const handleCloseApproveModal = () => {
+    setShowApproveModal(false);
+    setApprovingUnitId(null);
   };
 
   const handleReject = async (unitId: string) => {
@@ -542,7 +577,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
                           <td>
                             <div style={{ display: 'flex', gap: '8px' }}>
                               <button
-                                onClick={() => handleApprove(unit.id)}
+                                onClick={() => handleApproveClick(unit.id)}
                                 style={{
                                   padding: '6px 12px',
                                   borderRadius: '6px',
@@ -1063,6 +1098,82 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
               </label>
               <button type="submit">Update</button>
               <button type="button" onClick={handleCloseEditModal}>Cancel</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Approve Order Modal */}
+      {showApproveModal && (
+        <div className="modal" onClick={handleCloseApproveModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={handleCloseApproveModal}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                color: '#9ca3af',
+                cursor: 'pointer',
+                width: '2rem',
+                height: '2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                e.currentTarget.style.color = '#374151';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#9ca3af';
+              }}
+            >
+              ×
+            </button>
+            <h3>Approve Order</h3>
+            <form onSubmit={handleApproveSubmit}>
+              <label>
+                Shed Number:
+                <input
+                  type="text"
+                  name="shedNumber"
+                  value={approvalData.shedNumber}
+                  onChange={handleApprovalInputChange}
+                  required
+                  placeholder="Enter Shed Number"
+                />
+              </label>
+              <label>
+                Farm Name:
+                <input
+                  type="text"
+                  name="farmName"
+                  value={approvalData.farmName}
+                  onChange={handleApprovalInputChange}
+                  required
+                  placeholder="Enter Farm Name"
+                />
+              </label>
+              <label>
+                Farm Location:
+                <input
+                  type="text"
+                  name="farmLocation"
+                  value={approvalData.farmLocation}
+                  onChange={handleApprovalInputChange}
+                  required
+                  placeholder="Enter Farm Location"
+                />
+              </label>
+              <button type="submit" style={{ backgroundColor: '#10b981' }}>Confirm Approval</button>
+              <button type="button" onClick={handleCloseApproveModal}>Cancel</button>
             </form>
           </div>
         </div>

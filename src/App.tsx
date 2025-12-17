@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import HealthStatus from './components/HealthStatus';
 import UserTabs from './components/UserTabs';
 import Login from './components/Login';
@@ -11,7 +11,19 @@ interface Session {
 function App() {
   const [session, setSession] = useState<Session | null>(null);
 
+  useEffect(() => {
+    const saved = window.localStorage.getItem('ak_dashboard_session');
+    if (saved) {
+      try {
+        setSession(JSON.parse(saved));
+      } catch (e) {
+        window.localStorage.removeItem('ak_dashboard_session');
+      }
+    }
+  }, []);
+
   const handleLogin = useCallback((s: Session) => {
+    window.localStorage.setItem('ak_dashboard_session', JSON.stringify(s));
     setSession(s);
   }, []);
 
