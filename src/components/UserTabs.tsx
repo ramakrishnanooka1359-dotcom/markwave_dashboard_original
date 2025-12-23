@@ -139,7 +139,7 @@ const ImageNamesModal: React.FC<{ isOpen: boolean; onClose: () => void; data: an
   if (!isOpen || !data) return null;
 
   // Heuristic to find image-like fields
-  // Helper to check if a value is an image URL
+
   const isImage = (key: string, value: any) => {
     // console.log(value);
     if (typeof value !== 'string') return false;
@@ -410,19 +410,8 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
     refered_by_name: '',
   });
 
-  // Approval Modal State
-  const [showApproveModal, setShowApproveModal] = useState(false);
-  const [approvingUnitId, setApprovingUnitId] = useState<string | null>(null);
-  const [approvalData, setApprovalData] = useState({
-    shedNumber: '',
-    farmName: '',
-    farmLocation: '',
-  });
-
-
-
-
   // ID Proof Modal State
+
   const [showProofModal, setShowProofModal] = useState(false);
   const [selectedProofData, setSelectedProofData] = useState<any>(null);
 
@@ -434,61 +423,14 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
-  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [statusFilter, setStatusFilter] = useState("PENDING_ADMIN_VERIFICATION");
 
-  // --- Filter State ---
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('All');
-  const [paymentModeFilter, setPaymentModeFilter] = useState<string>('All');
 
-  // --- Derived Data for Filters ---
-  const uniquePaymentModes = React.useMemo(() => {
-    const modes = new Set<string>();
-    pendingUnits.forEach((item: any) => {
-      if (item.transaction?.paymentType) {
-        modes.add(item.transaction.paymentType);
-      }
-    });
-    return Array.from(modes);
-  }, [pendingUnits]);
-
-  // --- Pre-filter Data ---
-  const preFilteredUnits = React.useMemo(() => {
-    return pendingUnits.filter((item: any) => {
-      const matchStatus = paymentStatusFilter === 'All' || item.order?.paymentStatus === paymentStatusFilter;
-      const matchMode = paymentModeFilter === 'All' || item.transaction?.paymentType === paymentModeFilter;
-      return matchStatus && matchMode;
-    });
-  }, [pendingUnits, paymentStatusFilter, paymentModeFilter]);
-
-  // --- Orders Table Logic ---
-  const {
-    filteredData: filteredOrders,
-    searchQuery: ordersSearchQuery,
-    setSearchQuery: setOrdersSearchQuery,
-    sortConfig: ordersSortConfig,
-    requestSort: requestOrdersSort,
-  } = useTableSortAndSearch(preFilteredUnits, { key: '', direction: 'asc' }, (item, query) => {
-    const lowerQuery = query.toLowerCase();
-    const order = item.order || {};
-    const investor = item.investor || {};
-    const transaction = item.transaction || {};
-    return (
-      (investor.name || '').toLowerCase().includes(lowerQuery) ||
-      (order.id || '').toLowerCase().includes(lowerQuery) ||
-      (investor.mobile || '').toLowerCase().includes(lowerQuery) ||
-      (investor.email || '').toLowerCase().includes(lowerQuery)
-      // String(item.order?.numUnits || '').toLowerCase().includes(lowerQuery) ||
-      // String(transaction.amount || '').toLowerCase().includes(lowerQuery) ||
-      // (transaction.paymentType || '').toLowerCase().includes(lowerQuery) ||
-      // (order.paymentStatus || '').toLowerCase().includes(lowerQuery)
-    );
-  });
 
   // --- Referral Users Table Logic ---
   const {
     filteredData: filteredReferrals,
-    searchQuery: referralSearchQuery,
-    setSearchQuery: setReferralSearchQuery,
+
     sortConfig: referralSortConfig,
     requestSort: requestReferralSort,
   } = useTableSortAndSearch(referralUsers, { key: '', direction: 'asc' });
@@ -496,8 +438,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
   // --- Existing Users Table Logic ---
   const {
     filteredData: filteredExistingUsers,
-    searchQuery: existingUsersSearchQuery,
-    setSearchQuery: setExistingUsersSearchQuery,
+
     sortConfig: existingUsersSortConfig,
     requestSort: requestExistingUsersSort,
   } = useTableSortAndSearch(existingCustomers, { key: '', direction: 'asc' });
@@ -518,7 +459,6 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
       }
     };
 
-    // Removed shadowed fetchPendingUnits to use the component-level function
 
     const fetchExistingCustomers = async () => {
       try {
@@ -560,9 +500,11 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
       const response = await axios.get(API_ENDPOINTS.getPendingUnits(), {
         headers: {
           'X-Admin-Mobile': adminMobile,
+
         },
       });
       const units = response.data?.orders || [];
+
       setPendingUnits(units);
     } catch (error: any) {
       console.error('Error fetching pending units:', error);
@@ -588,13 +530,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
   };
 
   const handleApproveClick = async (unitId: string) => {
-    // setApprovingUnitId(unitId);
-    // setApprovalData({
-    //   shedNumber: '',
-    //   farmName: '',
-    //   farmLocation: '',
-    // });
-    // setShowApproveModal(false);
+
     try {
       await axios.post(API_ENDPOINTS.approveUnit(), { orderId: unitId }, {
         headers: {
@@ -602,46 +538,12 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
         }
       });
       alert('Order approved successfully!');
-      setShowApproveModal(false);
-      setApprovingUnitId(null);
       fetchPendingUnits();
     } catch (error) {
       console.error('Error approving order:', error);
       alert('Failed to approve order.');
     }
   };
-
-
-  const handleApprovalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setApprovalData({ ...approvalData, [name]: value });
-  };
-
-  const handleApproveSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!approvingUnitId) return;
-
-    try {
-      await axios.post(API_ENDPOINTS.approveUnit(), { orderId: approvingUnitId }, {
-        headers: {
-          'X-Admin-Mobile': adminMobile,
-        }
-      });
-      alert('Order approved successfully!');
-      setShowApproveModal(false);
-      setApprovingUnitId(null);
-      fetchPendingUnits();
-    } catch (error) {
-      console.error('Error approving order:', error);
-      alert('Failed to approve order.');
-    }
-  };
-
-  const handleCloseApproveModal = () => {
-    setShowApproveModal(false);
-    setApprovingUnitId(null);
-  };
-
   const handleReject = async (unitId: string) => {
     if (!window.confirm('Are you sure you want to reject this order?')) return;
     try {
@@ -675,7 +577,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
     if (!mobile || mobile.length < 10) return;
 
     try {
-      const response = await axios.get(`http://localhost:8000/users/${mobile}`);
+      const response = await axios.get(API_ENDPOINTS.getUserDetails(mobile));
       if (response.data && response.data.user) {
         const user = response.data.user;
         let fullName = '';
@@ -776,7 +678,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.put(`http://localhost:8000/users/${editingUser.mobile}`, {
+      const response = await axios.put(API_ENDPOINTS.updateUser(editingUser.mobile), {
         first_name: editFormData.first_name,
         last_name: editFormData.last_name,
         refered_by_mobile: editFormData.refered_by_mobile,
@@ -798,7 +700,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
       });
 
       // Refresh the referral users list
-      const refreshResponse = await axios.get('http://localhost:8000/users/referrals');
+      const refreshResponse = await axios.get(API_ENDPOINTS.getReferrals());
       setReferralUsers(refreshResponse.data.users || []);
     } catch (error) {
       console.error('Error updating user:', error);
@@ -810,7 +712,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
     setShowEditModal(false);
     setEditingUser(null);
   };
-const handleViewProof = (transaction: any, investor: any) => {
+  const handleViewProof = (transaction: any, investor: any) => {
     setSelectedProofData({ ...transaction, name: investor.name });
     setShowProofModal(true);
   };
@@ -904,10 +806,11 @@ const handleViewProof = (transaction: any, investor: any) => {
           <div>
 
             <h2>Live Orders (Pending Approval)</h2>
+
             <div className="filter-controls">
               <input
                 type="text"
-                placeholder="Search By Unit ID,Name,Mobile,Buffalo ID"
+                placeholder="Search By User Name,Unit Id,User Mobile,Buffalo Id"
                 className="search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -923,6 +826,7 @@ const handleViewProof = (transaction: any, investor: any) => {
                 <option value="CHEQUE">Cheque</option>
                 <option value="ONLINE_UPI">Online/UPI</option>
               </select>
+
               <select
                 className="filter-select"
                 value={statusFilter}
@@ -931,93 +835,29 @@ const handleViewProof = (transaction: any, investor: any) => {
                 <option value="All Status">All Status</option>
                 <option value="PENDING_ADMIN_VERIFICATION">Needs Approval</option>
                 <option value="PENDING_PAYMENT">Not Paid(Draft)</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
+                <option value="PAID">Approved</option>
+                <option value="REJECTED">Rejected</option>
               </select>
-
             </div>
+
             {ordersError && (
               <div style={{ marginBottom: '0.75rem', color: '#dc2626' }}>{ordersError}</div>
             )}
-            {/* <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <input
-                type="text"
-                placeholder="Search orders..."
-                value={ordersSearchQuery}
-                onChange={(e) => setOrdersSearchQuery(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #d1d5db',
-                  width: '100%',
-                  maxWidth: '300px'
-                }}
-              />
 
-              <select
-                value={paymentModeFilter}
-                onChange={(e) => setPaymentModeFilter(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #d1d5db',
-                  minWidth: '150px',
-                  backgroundColor: 'white'
-                }}
-              >
-                <option value="All">All Payment Modes</option>
-                {uniquePaymentModes.map(mode => (
-                  <option key={mode} value={mode}>{mode}</option>
-                ))}
-              </select>
-
-              <select
-                value={paymentStatusFilter}
-                onChange={(e) => setPaymentStatusFilter(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #d1d5db',
-                  minWidth: '150px',
-                  backgroundColor: 'white'
-                }}
-              >
-                <option value="All">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div> */}
             <div className="table-container">
               <table className="user-table">
                 <thead>
-                  <tr >
+                  <tr>
                     <th>S.No</th>
-                    <th style={{ minWidth: '180px', cursor: 'pointer' }} >
-                      User Name 
-                    </th>
-                    <th style={{ cursor: 'pointer' }} >
-                      Unit Id 
-                    </th>
-                    <th style={{ cursor: 'pointer' }} >
-                      User Mobile 
-                    </th>
-                    <th style={{ minWidth: '150px', cursor: 'pointer' }} >
-                      Email 
-                    </th>
-                    <th style={{ cursor: 'pointer' }} >
-                      Units 
-                    </th>
-                    <th style={{ cursor: 'pointer' }} >
-                      Amount 
-                    </th>
-                    <th style={{ cursor: 'pointer' }} >
-                      Payment Type 
-                    </th>
+                    <th>User Name</th>
+                    <th>Unit Id</th>
+                    <th>User Mobile</th>
+                    <th>Email</th>
+                    <th>Units</th>
+                    <th>Amount</th>
+                    <th>Payment Type</th>
                     <th>Payment Image Proof</th>
-                    <th style={{ cursor: 'pointer' }} >
-                      Status 
-                    </th>
+                    <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -1039,68 +879,48 @@ const handleViewProof = (transaction: any, investor: any) => {
                           <td >{inv.name}</td>
                           <td>{unit.id}</td>
                           <td>{inv.mobile}</td>
-                          <td>{inv.email||'-'}</td>
+                          <td>{inv.email || '-'}</td>
                           <td>{unit.numUnits}</td>
                           <td>{tx.amount ?? '-'}</td>
                           <td>{tx.paymentType || '-'}</td>
                           <td >
-                            <button
-                              style={{ minWidth: '100px', paddingTop: '4px', cursor: 'pointer', color: '#2563eb', textDecoration: 'underline', background: 'none', border: 'none' }}
-                              onClick={() => handleViewProof(tx, inv)}
-                            >
-                              Payment Proof
-                            </button>
+                            {unit.paymentType && (
+                              <button
+                                className="view-proof-btn"
+                                onClick={() => handleViewProof(tx, inv)}
+                              >
+                                Payment Proof
+                              </button> 
+                            ) || '-'}
                           </td>
                           <td>
-                            <span style={{
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              backgroundColor: '#fef3c7',
-                              color: '#d97706'
-                            }}>
-                              {unit.paymentStatus || '-'}
+                            <span className={`status-badge ${(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_PAYMENT') ? 'pending' :
+                              unit.paymentStatus === 'Approved' ? 'approved' :
+                                unit.paymentStatus === 'Rejected' ? 'rejected' : ''
+                              }`}>
+                              {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' ? 'PENDING_ADMIN_VERIFICATION' :
+                                unit.paymentStatus === 'PENDING_PAYMENT' ? 'PENDING_PAYMENT' :
+                                  unit.paymentStatus || '-'}
                             </span>
                           </td>
                           <td>
                             <div style={{ display: 'flex', gap: '8px' }}>
-                              <button
-                                onClick={() => handleApproveClick(unit.id)}
-                                style={{
-                                  padding: '6px 12px',
-                                  borderRadius: '6px',
-                                  border: 'none',
-                                  background: '#10b981',
-                                  color: 'white',
-                                  fontSize: '12px',
-                                  fontWeight: '600',
-                                  cursor: 'pointer',
-                                  transition: 'background 0.2s'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = '#059669'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = '#10b981'}
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleReject(unit.id)}
-                                style={{
-                                  padding: '6px 12px',
-                                  borderRadius: '6px',
-                                  border: 'none',
-                                  background: '#ef4444',
-                                  color: 'white',
-                                  fontSize: '12px',
-                                  fontWeight: '600',
-                                  cursor: 'pointer',
-                                  transition: 'background 0.2s'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = '#dc2626'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = '#ef4444'}
-                              >
-                                Reject
-                              </button>
+                              {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
+                                <button
+                                  onClick={() => handleApproveClick(unit.id)}
+                                  className="action-btn approve"
+                                >
+                                  Approve
+                                </button>
+                              )}
+                              {(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' || unit.paymentStatus === 'PENDING_PAYMENT') && (
+                                <button
+                                  onClick={() => handleReject(unit.id)}
+                                  className="action-btn reject"
+                                >
+                                  Reject
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1114,39 +934,25 @@ const handleViewProof = (transaction: any, investor: any) => {
         ) : activeTab === 'nonVerified' ? (
           <div>
             <h2>Referrals</h2>
-            {/* <div style={{ marginBottom: '1rem' }}>
-              <input
-                type="text"
-                placeholder="Search referrals..."
-                value={referralSearchQuery}
-                onChange={(e) => setReferralSearchQuery(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #d1d5db',
-                  width: '100%',
-                  maxWidth: '300px'
-                }}
-              />
-            </div> */}
+
             <div className="table-container">
               <table className="user-table">
                 <thead>
                   <tr>
                     <th style={{ cursor: 'pointer', textAlign: 'center' }}>
-                      Name 
+                      Name
                     </th>
                     <th style={{ cursor: 'pointer', textAlign: 'center' }} >
-                      Mobile 
+                      Mobile
                     </th>
                     <th style={{ cursor: 'pointer', textAlign: 'center' }} >
-                      Role 
+                      Role
                     </th>
                     <th style={{ cursor: 'pointer', textAlign: 'center' }} >
-                      Referred By 
+                      Referred By
                     </th>
                     <th style={{ cursor: 'pointer', textAlign: 'center' }} >
-                      Referrer Mobile 
+                      Referrer Mobile
                     </th>
                     <th style={{ textAlign: 'center' }}>Actions</th>
                   </tr>
@@ -1212,21 +1018,7 @@ const handleViewProof = (transaction: any, investor: any) => {
         ) : activeTab === 'existing' ? (
           <div>
             <h2>Verified Users</h2>
-            {/* <div style={{ marginBottom: '1rem' }}>
-              <input
-                type="text"
-                placeholder="Search verified users..."
-                value={existingUsersSearchQuery}
-                onChange={(e) => setExistingUsersSearchQuery(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #d1d5db',
-                  width: '100%',
-                  maxWidth: '300px'
-                }}
-              />
-            </div> */}
+
             <div className="table-container">
               <table className="user-table">
                 <thead>
@@ -1639,83 +1431,7 @@ const handleViewProof = (transaction: any, investor: any) => {
         )
       }
 
-      {/* Approve Order Modal */}
-      {
-        showApproveModal && (
-          <div className="modal" onClick={handleCloseApproveModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={handleCloseApproveModal}
-                style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  color: '#9ca3af',
-                  cursor: 'pointer',
-                  width: '2rem',
-                  height: '2rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  e.currentTarget.style.color = '#374151';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#9ca3af';
-                }}
-              >
-                ×
-              </button>
-              <h3>Approve Order</h3>
-              <form onSubmit={handleApproveSubmit}>
-                <label>
-                  Shed Number:
-                  <input
-                    type="text"
-                    name="shedNumber"
-                    value={approvalData.shedNumber}
-                    onChange={handleApprovalInputChange}
-                    required
-                    placeholder="Enter Shed Number"
-                  />
-                </label>
-                <label>
-                  Farm Name:
-                  <input
-                    type="text"
-                    name="farmName"
-                    value={approvalData.farmName}
-                    onChange={handleApprovalInputChange}
-                    required
-                    placeholder="Enter Farm Name"
-                  />
-                </label>
-                <label>
-                  Farm Location:
-                  <input
-                    type="text"
-                    name="farmLocation"
-                    value={approvalData.farmLocation}
-                    onChange={handleApprovalInputChange}
-                    required
-                    placeholder="Enter Farm Location"
-                  />
-                </label>
-                <button type="submit" style={{ backgroundColor: '#10b981' }}>Confirm Approval</button>
-                <button type="button" onClick={handleCloseApproveModal}>Cancel</button>
-              </form>
-            </div>
-          </div>
-        )
-      }
+
 
       <ImageNamesModal
         isOpen={showProofModal}
