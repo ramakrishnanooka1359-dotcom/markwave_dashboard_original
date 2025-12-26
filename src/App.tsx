@@ -2,8 +2,8 @@ import { useAppDispatch } from './store/hooks';
 import { setSession as setReduxSession } from './store/slices/authSlice';
 import React, { useState, useCallback, useEffect } from 'react';
 import HealthStatus from './components/HealthStatus';
-import UserTabs from './components/UserTabs';
-import Login from './components/Login';
+import UserTabs from './components/UserTabs/UserTabs';
+import Login from './components/auth/Login';
 
 interface Session {
   mobile: string;

@@ -1,7 +1,75 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api';
+
+// Async Thunks
+export const fetchPendingUnits = createAsyncThunk(
+    'orders/fetchPendingUnits',
+    async (adminMobile: string, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(API_ENDPOINTS.getPendingUnits(), {
+                headers: { 'X-Admin-Mobile': adminMobile }
+            });
+            return response.data?.orders || [];
+        } catch (error: any) {
+            const rawDetail = error?.response?.data?.detail;
+            let msg: string;
+            if (typeof rawDetail === 'string') {
+                msg = rawDetail;
+            } else if (Array.isArray(rawDetail)) {
+                const first = rawDetail[0];
+                if (first && typeof first === 'object' && 'msg' in first) {
+                    msg = String(first.msg);
+                } else {
+                    msg = 'Failed to load orders';
+                }
+            } else if (rawDetail && typeof rawDetail === 'object' && 'msg' in rawDetail) {
+                msg = String(rawDetail.msg);
+            } else {
+                msg = 'Failed to load orders';
+            }
+            return rejectWithValue(msg);
+        }
+    }
+);
+
+export const approveOrder = createAsyncThunk(
+    'orders/approveOrder',
+    async ({ unitId, adminMobile }: { unitId: string; adminMobile: string }, { dispatch, rejectWithValue }) => {
+        try {
+            await axios.post(API_ENDPOINTS.approveUnit(), { orderId: unitId }, {
+                headers: { 'X-Admin-Mobile': adminMobile }
+            });
+            // Refresh list after success
+            dispatch(fetchPendingUnits(adminMobile));
+            return unitId;
+        } catch (error: any) {
+            return rejectWithValue('Failed to approve order');
+        }
+    }
+);
+
+export const rejectOrder = createAsyncThunk(
+    'orders/rejectOrder',
+    async ({ unitId, adminMobile }: { unitId: string; adminMobile: string }, { dispatch, rejectWithValue }) => {
+        try {
+            await axios.post(API_ENDPOINTS.rejectUnit(), { orderId: unitId }, {
+                headers: { 'X-Admin-Mobile': adminMobile }
+            });
+            // Refresh list after success
+            dispatch(fetchPendingUnits(adminMobile));
+            return unitId;
+        } catch (error: any) {
+            return rejectWithValue('Failed to reject order');
+        }
+    }
+);
 
 export interface OrdersState {
     pendingUnits: any[];
+    loading: boolean;
+    error: string | null;
+    actionLoading: boolean; // For approve/reject actions
     trackingData: {
         [key: string]: {
             currentStageId: number;
@@ -18,11 +86,13 @@ export interface OrdersState {
         activeUnitIndex: number | null;
         showFullDetails: boolean;
     };
-    error: string | null;
 }
 
 const initialState: OrdersState = {
     pendingUnits: [],
+    loading: false,
+    error: null,
+    actionLoading: false,
     trackingData: {},
     filters: {
         searchQuery: '',
@@ -34,7 +104,6 @@ const initialState: OrdersState = {
         activeUnitIndex: null,
         showFullDetails: false,
     },
-    error: null,
 };
 
 const ordersSlice = createSlice({
@@ -77,6 +146,43 @@ const ordersSlice = createSlice({
             state.trackingData[action.payload.key] = action.payload.data;
         }
     },
+    extraReducers: (builder) => {
+        // Fetch Pending Units
+        builder.addCase(fetchPendingUnits.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(fetchPendingUnits.fulfilled, (state, action) => {
+            state.loading = false;
+            state.pendingUnits = action.payload;
+        });
+        builder.addCase(fetchPendingUnits.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string;
+        });
+
+        // Approve Order
+        builder.addCase(approveOrder.pending, (state) => {
+            state.actionLoading = true;
+        });
+        builder.addCase(approveOrder.fulfilled, (state) => {
+            state.actionLoading = false;
+        });
+        builder.addCase(approveOrder.rejected, (state) => {
+            state.actionLoading = false;
+        });
+
+        // Reject Order
+        builder.addCase(rejectOrder.pending, (state) => {
+            state.actionLoading = true;
+        });
+        builder.addCase(rejectOrder.fulfilled, (state) => {
+            state.actionLoading = false;
+        });
+        builder.addCase(rejectOrder.rejected, (state) => {
+            state.actionLoading = false;
+        });
+    }
 });
 
 export const {

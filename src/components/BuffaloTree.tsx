@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import BuffaloMindmap from './BuffaloMindmap';
+import './BuffaloTree.css';
 
 function addYears(date: Date, years: number) {
   const d = new Date(date);
@@ -66,20 +67,20 @@ function generateBuffalo(name: string, bornDate: Date, windowStart: Date, window
 const BuffaloNode: React.FC<{ node: any; level?: number }> = ({ node, level = 0 }) => {
   const [open, setOpen] = useState(level < 1); // root expanded
   return (
-    <div style={{ marginLeft: level * 16, marginTop: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{ marginLeft: level * 16 }} className="buffalo-node-wrapper">
+      <div className="buffalo-node-content">
         {node.children && node.children.length > 0 && (
-          <button onClick={() => setOpen(!open)} style={{ width: 22, height: 22, borderRadius: 4 }}>
+          <button onClick={() => setOpen(!open)} className="buffalo-node-toggle-btn">
             {open ? '-' : '+'}
           </button>
         )}
-        <div style={{ fontWeight: 700 }}>{node.name}</div>
-        <div style={{ marginLeft: 8, color: '#6b7280' }}>born: {node.born}</div>
-        <div style={{ marginLeft: 8, color: '#6b7280' }}>milk: {node.milkStarts}</div>
-        <div style={{ marginLeft: 8, color: '#10b981' }}>children: {node.totalChildren}</div>
+        <div className="buffalo-node-name">{node.name}</div>
+        <div className="buffalo-node-info">born: {node.born}</div>
+        <div className="buffalo-node-info">milk: {node.milkStarts}</div>
+        <div className="buffalo-node-children-count">children: {node.totalChildren}</div>
       </div>
       {open && node.children && node.children.length > 0 && (
-        <div style={{ marginTop: 6 }}>
+        <div className="buffalo-node-children">
           {node.children.map((c: any, idx: number) => (
             <BuffaloNode key={idx} node={c} level={level + 1} />
           ))}
@@ -107,71 +108,32 @@ const BuffaloTree: React.FC = () => {
   return (
     <div>
       {/* Summary Card */}
-      <div style={{ 
-        padding: '1rem', 
-        background: '#fff', 
-        borderRadius: '8px', 
-        boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-        border: '1px solid #e5e7eb',
-        marginBottom: '1rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{ 
-          fontSize: '1rem', 
-          color: '#374151',
-          fontWeight: '500'
-        }}>
-          <span style={{ fontWeight: '600' }}>Buffalo count:</span> 
-          <span style={{ 
-            marginLeft: '0.5rem', 
-            color: '#2563eb', 
-            fontWeight: '700',
-            fontSize: '1.1rem'
-          }}>
+      <div className="buffalo-tree-card">
+        <div className="buffalo-tree-stat">
+          <span className="buffalo-tree-stat-label">Buffalo count:</span>
+          <span className="buffalo-tree-stat-value">
             {totalBuffalos}
           </span>
         </div>
-        <div style={{ 
-          fontSize: '0.875rem', 
-          color: '#6b7280',
-          fontWeight: '500'
-        }}>
-          <span style={{ fontWeight: '600' }}>Projection period:</span> 
-          <span style={{ marginLeft: '0.5rem' }}>
+        <div className="buffalo-tree-period">
+          <span className="buffalo-tree-stat-label">Projection period:</span>
+          <span className="buffalo-tree-period-value">
             {formatYM(windowStart)} to {formatYM(windowEnd)}
           </span>
         </div>
       </div>
 
       {/* View Toggle Buttons */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <button 
-          onClick={() => setView('list')} 
-          style={{ 
-            padding: '6px 10px', 
-            borderRadius: 6, 
-            background: view === 'list' ? '#2563eb' : '#eef2ff', 
-            color: view === 'list' ? '#fff' : '#111',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: '500'
-          }}
+      <div className="buffalo-view-toggle">
+        <button
+          onClick={() => setView('list')}
+          className={`buffalo-view-btn ${view === 'list' ? 'active' : 'inactive'}`}
         >
           List View
         </button>
-        <button 
-          onClick={() => setView('mindmap')} 
-          style={{ 
-            padding: '6px 10px', 
-            borderRadius: 6, 
-            background: view === 'mindmap' ? '#2563eb' : '#eef2ff', 
-            color: view === 'mindmap' ? '#fff' : '#111',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: '500'
-          }}
+        <button
+          onClick={() => setView('mindmap')}
+          className={`buffalo-view-btn ${view === 'mindmap' ? 'active' : 'inactive'}`}
         >
           Mindmap View
         </button>
@@ -179,7 +141,7 @@ const BuffaloTree: React.FC = () => {
 
       {/* Tree Views */}
       {view === 'list' ? (
-        <div style={{ padding: 12, background: '#fff', borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <div className="buffalo-list-view-container">
           <BuffaloNode node={tree} level={0} />
         </div>
       ) : (

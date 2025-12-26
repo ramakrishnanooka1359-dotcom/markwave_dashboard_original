@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { userService } from '../services/api';
+import './HealthStatus.css';
 
 const HealthStatus: React.FC = () => {
   const [isHealthy, setIsHealthy] = useState<boolean | null>(null);
@@ -34,16 +35,9 @@ const HealthStatus: React.FC = () => {
 
   return (
     <div className="health-status">
-      <div
-        style={{
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          backgroundColor: isHealthy ? '#16a34a' : '#dc2626',
-        }}
-      ></div>
+      <div className={`health-status-dot ${isHealthy ? 'online' : 'offline'}`}></div>
       <span className={`health-status-text ${isHealthy ? 'health-online' : 'health-offline'}`}>
-         {isHealthy ? 'Online' : 'Offline'}
+        {isHealthy ? 'Online' : 'Offline'}
       </span>
     </div>
   );

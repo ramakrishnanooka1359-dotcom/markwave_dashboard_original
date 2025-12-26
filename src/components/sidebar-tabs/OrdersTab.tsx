@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import { CheckCircle, CheckSquare, XCircle, Clock, ClipboardList } from 'lucide-react';
@@ -11,7 +11,10 @@ import {
     setShowFullDetails,
     updateTrackingData,
 } from '../../store/slices/ordersSlice';
+import { API_ENDPOINTS } from '../../config/api';
+import './OrdersTab.css';
 import { setProofModal } from '../../store/slices/uiSlice';
+import Pagination from '../common/Pagination';
 
 interface OrdersTabProps {
     handleApproveClick: (unitId: string) => void;
@@ -31,63 +34,93 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
     const { expandedOrderId, activeUnitIndex, showFullDetails } = useAppSelector((state: RootState) => state.orders.expansion);
     const trackingData = useAppSelector((state: RootState) => state.orders.trackingData);
 
+    // Debounce Search
+    const [localSearch, setLocalSearch] = useState(searchQuery);
+
+    useEffect(() => {
+        setLocalSearch(searchQuery);
+    }, [searchQuery]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            dispatch(setSearchQuery(localSearch));
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [localSearch, dispatch]);
+
     // Filter Logic
-    const filteredUnits = pendingUnits.filter((entry: any) => {
-        const unit = entry.order || {};
-        const tx = entry.transaction || {};
-        const inv = entry.investor || {};
+    const filteredUnits = useMemo(() => {
+        return pendingUnits.filter((entry: any) => {
+            const unit = entry.order || {};
+            const tx = entry.transaction || {};
+            const inv = entry.investor || {};
 
-
-        let matchesSearch = true;
-        if (searchQuery) {
-            const query = searchQuery.toLocaleLowerCase();
-            matchesSearch = (
-                (unit.id && String(unit.id).toLocaleLowerCase().includes(query)) ||
-                (unit.userId && String(unit.userId).toLocaleLowerCase().includes(query)) ||
-                (unit.breedId && String(unit.breedId).toLocaleLowerCase().includes(query)) ||
-                (inv.name && String(inv.name).toLocaleLowerCase().includes(query))
-            );
-        }
-
-        let matchesPayment = true;
-        if (paymentFilter !== 'All Payments') {
-            matchesPayment = tx.paymentType === paymentFilter;
-        }
-
-        let matchesStatus = true;
-        if (statusFilter !== 'All Status') {
-            const currentStatus = unit.paymentStatus;
-            if (statusFilter === 'PAID') {
-                matchesStatus = currentStatus === 'PAID' || currentStatus === 'Approved';
-            } else if (statusFilter === 'REJECTED') {
-                matchesStatus = currentStatus === 'REJECTED' || currentStatus === 'Rejected';
-            } else {
-                matchesStatus = currentStatus === statusFilter;
+            let matchesSearch = true;
+            if (searchQuery) {
+                const query = searchQuery.toLocaleLowerCase();
+                matchesSearch = (
+                    (unit.id && String(unit.id).toLocaleLowerCase().includes(query)) ||
+                    (unit.userId && String(unit.userId).toLocaleLowerCase().includes(query)) ||
+                    (unit.breedId && String(unit.breedId).toLocaleLowerCase().includes(query)) ||
+                    (inv.name && String(inv.name).toLocaleLowerCase().includes(query))
+                );
             }
-        }
 
-        return matchesSearch && matchesPayment && matchesStatus;
-    });
+            let matchesPayment = true;
+            if (paymentFilter !== 'All Payments') {
+                matchesPayment = tx.paymentType === paymentFilter;
+            }
+
+            let matchesStatus = true;
+            if (statusFilter !== 'All Status') {
+                const currentStatus = unit.paymentStatus;
+                if (statusFilter === 'PAID') {
+                    matchesStatus = currentStatus === 'PAID' || currentStatus === 'Approved';
+                } else if (statusFilter === 'REJECTED') {
+                    matchesStatus = currentStatus === 'REJECTED' || currentStatus === 'Rejected';
+                } else {
+                    matchesStatus = currentStatus === statusFilter;
+                }
+            }
+
+            return matchesSearch && matchesPayment && matchesStatus;
+        });
+    }, [pendingUnits, searchQuery, paymentFilter, statusFilter]);
 
 
-    const handleViewProof = (transaction: any, investor: any) => {
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 15;
+
+    // Reset page on filter change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, paymentFilter, statusFilter]);
+
+    // Pagination Logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredUnits.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredUnits.length / itemsPerPage);
+
+    const handleViewProof = useCallback((transaction: any, investor: any) => {
         dispatch(setProofModal({ isOpen: true, data: { ...transaction, name: investor.name } }));
-    };
+    }, [dispatch]);
 
-    const handleStageUpdateLocal = (orderId: string, buffaloNum: number, nextStageId: number) => {
+    const handleStageUpdateLocal = useCallback((orderId: string, buffaloNum: number, nextStageId: number) => {
         const now = new Date();
         const date = now.toLocaleDateString('en-GB').replace(/\//g, '-');
         const time = now.toLocaleTimeString('en-GB');
         dispatch(updateTrackingData({ key: `${orderId}-${buffaloNum}`, stageId: nextStageId, date, time }));
-    };
+    }, [dispatch]);
 
-    const getTrackingForBuffalo = (orderId: string, buffaloNum: number, initialStatus: string) => {
+    const getTrackingForBuffalo = useCallback((orderId: string, buffaloNum: number, initialStatus: string) => {
         const key = `${orderId}-${buffaloNum}`;
         if (trackingData[key]) return trackingData[key];
         return { currentStageId: 1, history: { 1: { date: '24-05-2025', time: '10:30:00' } } };
-    };
+    }, [trackingData]);
 
-    const formatIndiaDate = (val: any) => {
+    const formatIndiaDate = useCallback((val: any) => {
         if (!val || (typeof val !== 'string' && typeof val !== 'number')) return String(val);
         const date = new Date(val);
         if (date instanceof Date && !isNaN(date.getTime()) && String(val).length > 10) {
@@ -100,7 +133,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
             return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
         }
         return val;
-    };
+    }, []);
 
     const formatIndiaDateHeader = (val: any) => {
         if (!val || (typeof val !== 'string' && typeof val !== 'number')) return '-';
@@ -125,17 +158,20 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
         notPaid: pendingUnits.filter((u: any) => u.order?.paymentStatus === 'PENDING_PAYMENT').length,
     };
 
+
+
+    // ... inside the component ...
+
     return (
-        <div className="orders-dashboard" style={{ marginTop: '-10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0 }}>Live Orders</h2>
+        <div className="orders-dashboard">
+            <div className="orders-header">
+                <h2>Live Orders</h2>
                 <input
                     type="text"
                     placeholder="Search By UserName, OrderId, UserMobile"
-                    className="search-input"
-                    style={{ width: '300px', padding: '6px 12px', fontSize: '0.9rem', height: 'auto' }}
-                    value={searchQuery}
-                    onChange={(e) => dispatch(setSearchQuery(e.target.value))}
+                    className="search-input orders-search"
+                    value={localSearch}
+                    onChange={(e) => setLocalSearch(e.target.value)}
                 />
             </div>
 
@@ -143,11 +179,10 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
             {/* Status Cards / Filters */}
             <div className="status-controls">
                 <div
-                    className="stats-card"
+                    className={`stats-card ${statusFilter === 'PENDING_ADMIN_VERIFICATION' ? 'active-pending' : ''}`}
                     onClick={() => dispatch(setStatusFilter('PENDING_ADMIN_VERIFICATION'))}
-                    style={{ borderColor: statusFilter === 'PENDING_ADMIN_VERIFICATION' ? '#fcd34d' : 'transparent' }}
                 >
-                    <div className="card-icon-wrapper" style={{ backgroundColor: '#fffbeb', color: '#d97706' }}>
+                    <div className="card-icon-wrapper pending">
                         <CheckCircle size={24} />
                     </div>
                     <div className="card-content">
@@ -157,11 +192,10 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                 </div>
 
                 <div
-                    className="stats-card"
+                    className={`stats-card ${statusFilter === 'PAID' ? 'active-paid' : ''}`}
                     onClick={() => dispatch(setStatusFilter('PAID'))}
-                    style={{ borderColor: statusFilter === 'PAID' ? '#6ee7b7' : 'transparent' }}
                 >
-                    <div className="card-icon-wrapper" style={{ backgroundColor: '#ecfdf5', color: '#059669' }}>
+                    <div className="card-icon-wrapper approved">
                         <CheckSquare size={24} />
                     </div>
                     <div className="card-content">
@@ -171,11 +205,10 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                 </div>
 
                 <div
-                    className="stats-card"
+                    className={`stats-card ${statusFilter === 'REJECTED' ? 'active-rejected' : ''}`}
                     onClick={() => dispatch(setStatusFilter('REJECTED'))}
-                    style={{ borderColor: statusFilter === 'REJECTED' ? '#fca5a5' : 'transparent' }}
                 >
-                    <div className="card-icon-wrapper" style={{ backgroundColor: '#fef2f2', color: '#dc2626' }}>
+                    <div className="card-icon-wrapper rejected">
                         <XCircle size={24} />
                     </div>
                     <div className="card-content">
@@ -185,11 +218,10 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                 </div>
 
                 <div
-                    className="stats-card"
+                    className={`stats-card ${statusFilter === 'PENDING_PAYMENT' ? 'active-payment-due' : ''}`}
                     onClick={() => dispatch(setStatusFilter('PENDING_PAYMENT'))}
-                    style={{ borderColor: statusFilter === 'PENDING_PAYMENT' ? '#cbd5e1' : 'transparent' }}
                 >
-                    <div className="card-icon-wrapper" style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>
+                    <div className="card-icon-wrapper payment-due">
                         <Clock size={24} />
                     </div>
                     <div className="card-content">
@@ -199,11 +231,10 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                 </div>
 
                 <div
-                    className="stats-card"
+                    className={`stats-card ${statusFilter === 'All Status' ? 'active-all' : ''}`}
                     onClick={() => dispatch(setStatusFilter('All Status'))}
-                    style={{ borderColor: statusFilter === 'All Status' ? '#0ea5e9' : 'transparent' }}
                 >
-                    <div className="card-icon-wrapper" style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
+                    <div className="card-icon-wrapper all">
                         <ClipboardList size={24} />
                     </div>
                     <div className="card-content">
@@ -215,16 +246,18 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
             {/* Filter Controls Removed (Search moved to header, Select moved to Table) */}
 
-            {ordersError && (
-                <div style={{ marginBottom: '0.75rem', color: '#dc2626' }}>{ordersError}</div>
-            )}
+            {
+                ordersError && (
+                    <div className="orders-error-msg">{ordersError}</div>
+                )
+            }
 
             <div className="table-container">
                 <table className="user-table">
                     <thead>
                         <tr>
                             <th>S.No</th>
-                            <th style={{ minWidth: '150px' }}>User Name</th>
+                            <th className="th-user-name">User Name</th>
                             <th>Status</th>
                             <th>Units</th>
                             <th>Order Id</th>
@@ -235,19 +268,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                 <select
                                     value={paymentFilter}
                                     onChange={(e) => dispatch(setPaymentFilter(e.target.value))}
-                                    style={{
-                                        background: '#ffffff',
-                                        color: '#344767',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '6px',
-                                        padding: '4px 8px',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        outline: 'none',
-                                        fontSize: '0.85rem',
-                                        width: '135px',
-                                        height: '35px'
-                                    }}
+                                    className="payment-type-select"
                                 >
                                     <option value="All Payments">Payment Type</option>
                                     <option value="BANK_TRANSFER">Bank Transfer</option>
@@ -255,59 +276,53 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                     <option value="ONLINE_UPI" disabled>Online/UPI</option>
                                 </select>
                             </th>
-                            <th style={{ minWidth: '200px' }}>Payment Image Proof</th>
+                            <th className="th-proof">Payment Image Proof</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredUnits.length === 0 ? (
+                        {currentItems.length === 0 ? (
                             <tr>
-                                <td colSpan={11} style={{ textAlign: 'center', color: '#888' }}>
+                                <td colSpan={11} className="no-data-row">
                                     {searchQuery ? 'No matching orders found' : 'No pending orders'}
                                 </td>
                             </tr>
                         ) : (
-                            filteredUnits.map((entry: any, index: number) => {
+                            currentItems.map((entry: any, index: number) => {
                                 const unit = entry.order || {};
                                 const tx = entry.transaction || {};
                                 const inv = entry.investor || {};
                                 const isExpanded = expandedOrderId === unit.id;
                                 const canExpand = false;
+                                const serialNumber = indexOfFirstItem + index + 1;
 
                                 return (
                                     <React.Fragment key={`${unit.id || 'order'}-${index}`}>
                                         <tr>
-                                            <td>{index + 1}</td>
+                                            <td>{serialNumber}</td>
                                             <td>{inv.name}</td>
-                                            <td style={{ verticalAlign: 'middle' }}>
+                                            <td className="td-vertical-middle">
                                                 {(() => {
-                                                    let statusValues = { label: unit.paymentStatus || '-', style: {} };
+                                                    let statusClass = '';
+                                                    let label = unit.paymentStatus || '-';
 
                                                     if (unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION') {
-                                                        statusValues = {
-                                                            label: 'Admin Approval',
-                                                            style: { border: '1px solid #fcd34d', background: '#fffbeb', color: '#b45309', borderRadius: '9999px', padding: '4px 12px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }
-                                                        };
+                                                        statusClass = 'admin-approval';
+                                                        label = 'Admin Approval';
                                                     } else if (unit.paymentStatus === 'PAID' || unit.paymentStatus === 'Approved') {
-                                                        statusValues = {
-                                                            label: 'Paid',
-                                                            style: { border: '1px solid #34d399', background: '#ecfdf5', color: '#047857', borderRadius: '9999px', padding: '4px 12px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }
-                                                        };
+                                                        statusClass = 'paid';
+                                                        label = 'Paid';
                                                     } else if (unit.paymentStatus === 'REJECTED') {
-                                                        statusValues = {
-                                                            label: 'Rejected',
-                                                            style: { border: '1px solid #fca5a5', background: '#fef2f2', color: '#b91c1c', borderRadius: '9999px', padding: '4px 12px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }
-                                                        };
+                                                        statusClass = 'rejected';
+                                                        label = 'Rejected';
                                                     } else if (unit.paymentStatus === 'PENDING_PAYMENT') {
-                                                        statusValues = {
-                                                            label: 'Payment Due',
-                                                            style: { border: '1px solid #cbd5e1', background: '#f1f5f9', color: '#334155', borderRadius: '9999px', padding: '4px 12px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }
-                                                        };
+                                                        statusClass = 'payment-due';
+                                                        label = 'Payment Due';
                                                     }
 
                                                     return (
-                                                        <span style={{ display: 'inline-block', ...statusValues.style }}>
-                                                            {statusValues.label}
+                                                        <span className={`status-badge ${statusClass}`}>
+                                                            {label}
                                                         </span>
                                                     );
                                                 })()}
@@ -327,15 +342,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                             dispatch(setShowFullDetails(false));
                                                         }
                                                     }}
-                                                    style={{
-                                                        background: 'transparent',
-                                                        border: 'none',
-                                                        color: canExpand ? '#2563eb' : '#64748b',
-                                                        fontWeight: '600',
-                                                        cursor: canExpand ? 'pointer' : 'default',
-                                                        padding: 0,
-                                                        textDecoration: canExpand ? 'underline' : 'none'
-                                                    }}
+                                                    className={`expand-order-btn ${canExpand ? 'can-expand' : 'disabled'}`}
                                                 >
                                                     {unit.id}
                                                 </button>
@@ -355,7 +362,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                 ) : '-'}
                                             </td>
                                             <td>
-                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                <div className="action-btn-container">
                                                     {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
                                                         <button
                                                             onClick={() => handleApproveClick(unit.id)}
@@ -376,30 +383,13 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                             </td>
                                         </tr>
                                         {isExpanded && canExpand && (
-                                            <tr style={{ backgroundColor: '#f9fafb' }}>
-                                                <td colSpan={11} style={{ padding: '24px' }}>
-                                                    <div className="order-expand-animation" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                                            <div style={{
-                                                                backgroundColor: '#fff',
-                                                                borderRadius: '12px',
-                                                                border: '1px solid #e5e7eb',
-                                                                overflow: 'hidden'
-                                                            }}>
-                                                                <div style={{
-                                                                    padding: '12px 20px',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'space-between',
-                                                                    gap: '20px',
-                                                                    borderBottom: showFullDetails ? '1px solid #f1f5f9' : 'none'
-                                                                }}>
-                                                                    <div style={{
-                                                                        display: 'grid',
-                                                                        gridTemplateColumns: 'repeat(5, 1fr)',
-                                                                        gap: '20px',
-                                                                        flex: 1
-                                                                    }}>
+                                            <tr className="expanded-row">
+                                                <td colSpan={11} className="expanded-row-content">
+                                                    <div className="order-expand-animation expanded-details-container">
+                                                        <div className="expanded-top-section">
+                                                            <div className="details-card">
+                                                                <div className={`details-header ${showFullDetails ? 'border-bottom' : ''}`}>
+                                                                    <div className="details-grid">
                                                                         {[
                                                                             { label: 'Payment Method', value: tx.paymentType || '-' },
                                                                             { label: 'Total Amount', value: `₹${tx.amount ?? '-'}` },
@@ -407,40 +397,22 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                             { label: 'Payment Mode', value: tx.paymentType || 'MANUAL_PAYMENT' },
                                                                             { label: 'Breed ID', value: unit.breedId || 'MURRAH-001' }
                                                                         ].map((item, idx) => (
-                                                                            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                                                <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</div>
-                                                                                <div style={{ fontSize: '12px', fontWeight: '600', color: '#111827' }}>{item.value}</div>
+                                                                            <div key={idx} className="details-item">
+                                                                                <div className="details-label">{item.label}</div>
+                                                                                <div className="details-value">{item.value}</div>
                                                                             </div>
                                                                         ))}
                                                                     </div>
                                                                     <button
                                                                         onClick={() => dispatch(setShowFullDetails(!showFullDetails))}
-                                                                        style={{
-                                                                            cursor: 'pointer',
-                                                                            fontSize: '14px',
-                                                                            color: '#94a3b8',
-                                                                            background: 'none',
-                                                                            border: 'none',
-                                                                            padding: '4px',
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
-                                                                            justifyContent: 'center',
-                                                                            transition: 'transform 0.2s ease',
-                                                                            transform: showFullDetails ? 'rotate(180deg)' : 'rotate(0deg)',
-                                                                            lineHeight: 1
-                                                                        }}
+                                                                        className={`toggle-details-btn ${showFullDetails ? 'open' : 'closed'}`}
                                                                     >
                                                                         ∨
                                                                     </button>
                                                                 </div>
 
                                                                 {showFullDetails && (
-                                                                    <div className="order-expand-animation" style={{
-                                                                        padding: '0 20px 20px 20px',
-                                                                        display: 'grid',
-                                                                        gridTemplateColumns: 'repeat(5, 1fr)',
-                                                                        gap: '20px'
-                                                                    }}>
+                                                                    <div className="order-expand-animation extra-details-grid">
                                                                         {(() => {
                                                                             const excludedKeys = ['id', 'name', 'mobile', 'email', 'amount', 'paymentType', 'paymentStatus', 'numUnits', 'order', 'transaction', 'investor', 'password', 'token', 'images', 'cpfUnitCost', 'unitCost', 'base_unit_cost', 'baseUnitCost', 'cpf_unit_cost', 'unit_cost', 'otp', 'first_name', 'last_name', 'otp_verified', 'otp_created_at', 'is_form_filled', 'occupation', 'updatedAt', 'updated_at', 'createdAt', 'created_at', 'breedId', 'breed_id', 'paymentApprovedAt', 'receipt_date', 'date', 'approved_at', 'approvedAt', 'order_date', 'payment_date'];
                                                                             const combinedData = { ...unit, ...tx, ...inv };
@@ -454,11 +426,11 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                                     return !isExcluded && !isUrlKey && !isUrlValue && value !== null && value !== undefined && typeof value !== 'object';
                                                                                 })
                                                                                 .map(([key, value], idx) => (
-                                                                                    <div key={`extra-${idx}`} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                                                                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                                                    <div key={`extra-${idx}`} className="details-item">
+                                                                                        <div className="details-label">
                                                                                             {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())}
                                                                                         </div>
-                                                                                        <div style={{ fontSize: '12px', fontWeight: '600', color: '#111827' }}>{formatIndiaDate(value)}</div>
+                                                                                        <div className="details-value">{formatIndiaDate(value)}</div>
                                                                                     </div>
                                                                                 ));
                                                                         })()}
@@ -467,43 +439,26 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                             </div>
                                                         </div>
 
-                                                        <div style={{ display: 'flex', gap: '24px', minHeight: '300px' }}>
-                                                            <div style={{ width: '240px', flexShrink: 0, borderRight: '1px solid #f1f5f9', paddingRight: '20px' }}>
-                                                                <div style={{ fontWeight: '700', color: '#111827', fontSize: '14px', marginBottom: '16px' }}>Select Unit</div>
-                                                                <div className="units-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '450px', overflowY: 'auto', paddingRight: '4px' }}>
+                                                        <div className="expanded-bottom-section">
+                                                            <div className="units-select-sidebar">
+                                                                <div className="units-select-title">Select Unit</div>
+                                                                <div className="units-list">
                                                                     {Array.from({ length: unit.numUnits || 0 }).map((_, i) => (
                                                                         <button
                                                                             key={i}
                                                                             onClick={() => dispatch(setActiveUnitIndex(activeUnitIndex === i ? null : i))}
-                                                                            style={{
-                                                                                width: '100%',
-                                                                                padding: '12px 16px',
-                                                                                borderRadius: '10px',
-                                                                                border: '1px solid',
-                                                                                borderColor: activeUnitIndex === i ? '#2563eb' : '#e5e7eb',
-                                                                                backgroundColor: activeUnitIndex === i ? '#eff6ff' : '#fff',
-                                                                                color: activeUnitIndex === i ? '#2563eb' : '#4b5563',
-                                                                                fontWeight: '600',
-                                                                                fontSize: '13px',
-                                                                                cursor: 'pointer',
-                                                                                textAlign: 'left',
-                                                                                display: 'flex',
-                                                                                alignItems: 'center',
-                                                                                justifyContent: 'space-between',
-                                                                                transition: 'all 0.2s',
-                                                                                boxShadow: activeUnitIndex === i ? '0 4px 6px -1px rgba(37, 99, 235, 0.1)' : 'none'
-                                                                            }}
+                                                                            className={`unit-select-btn ${activeUnitIndex === i ? 'active' : 'inactive'}`}
                                                                         >
                                                                             <span>Unit {i + 1}</span>
-                                                                            <span style={{ fontSize: '10px', opacity: 0.7 }}>{unit.breedId || 'MURRAH-001'}</span>
+                                                                            <span className="unit-breed-id">{unit.breedId || 'MURRAH-001'}</span>
                                                                         </button>
                                                                     ))}
                                                                 </div>
                                                             </div>
 
-                                                            <div style={{ flex: 1 }}>
+                                                            <div className="tracking-content">
                                                                 {activeUnitIndex !== null ? (
-                                                                    <div className="order-expand-animation" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px' }}>
+                                                                    <div className="order-expand-animation tracking-grid">
                                                                         {[1, 2].map((buffaloNum) => {
                                                                             const tracker = trackingData[`${unit.id}-${buffaloNum}`] || getTrackingForBuffalo(unit.id, buffaloNum, unit.paymentStatus);
                                                                             const currentStageId = tracker.currentStageId;
@@ -520,12 +475,12 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                             ];
 
                                                                             return (
-                                                                                <div key={buffaloNum} style={{ padding: '24px', backgroundColor: '#fff', borderRadius: '16px', border: '1px solid #f1f5f9', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-                                                                                    <div style={{ fontWeight: '700', color: '#111827', fontSize: '15px', marginBottom: '24px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+                                                                                <div key={buffaloNum} className="tracking-card">
+                                                                                    <div className="tracking-card-header">
                                                                                         Buffalo {buffaloNum} Progress
                                                                                     </div>
 
-                                                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                                    <div className="timeline-container">
                                                                                         {timelineStages.map((stage, idx) => {
                                                                                             const isLast = idx === timelineStages.length - 1;
                                                                                             const isStepCompleted = stage.id < currentStageId;
@@ -534,56 +489,29 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                                             const stageTime = tracker.history[stage.id]?.time || '-';
 
                                                                                             return (
-                                                                                                <div key={stage.id} style={{ display: 'flex', minHeight: '80px', position: 'relative' }}>
-                                                                                                    <div style={{ width: '90px', paddingRight: '16px', textAlign: 'right', paddingTop: '4px' }}>
-                                                                                                        <div style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>{stageDate}</div>
+                                                                                                <div key={stage.id} className="timeline-item">
+                                                                                                    <div className="timeline-date">
+                                                                                                        <div className="timeline-date-text">{stageDate}</div>
                                                                                                     </div>
 
-                                                                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '16px', position: 'relative' }}>
+                                                                                                    <div className="timeline-marker-container">
                                                                                                         {!isLast && (
-                                                                                                            <div style={{
-                                                                                                                position: 'absolute', top: '24px', bottom: '-4px', width: '2px',
-                                                                                                                backgroundColor: isStepCompleted ? '#10b981' : '#e2e8f0',
-                                                                                                                zIndex: 1
-                                                                                                            }} />
+                                                                                                            <div className={`timeline-line ${isStepCompleted ? 'completed' : 'pending'}`} />
                                                                                                         )}
-                                                                                                        <div style={{
-                                                                                                            width: '24px', height: '24px', borderRadius: '50%',
-                                                                                                            backgroundColor: isStepCompleted ? '#10b981' : (isCurrent ? '#3b82f6' : '#fff'),
-                                                                                                            border: `2px solid ${isStepCompleted ? '#10b981' : (isCurrent ? '#3b82f6' : '#e2e8f0')}`,
-                                                                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                                                                            color: isStepCompleted || isCurrent ? 'white' : '#9ca3af',
-                                                                                                            fontSize: '12px', fontWeight: 'bold', zIndex: 2,
-                                                                                                            flexShrink: 0
-                                                                                                        }}>
+                                                                                                        <div className={`timeline-dot ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
                                                                                                             {isStepCompleted ? '✓' : stage.id}
                                                                                                         </div>
                                                                                                     </div>
 
-                                                                                                    <div style={{ flex: 1, paddingBottom: isLast ? '0' : '24px' }}>
-                                                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                                                                                                            <div style={{
-                                                                                                                fontSize: '14px', fontWeight: '700',
-                                                                                                                color: isStepCompleted ? '#10b981' : (isCurrent ? '#3b82f6' : '#9ca3af')
-                                                                                                            }}>
+                                                                                                    <div className={`timeline-content ${isLast ? '' : 'not-last'}`}>
+                                                                                                        <div className="timeline-header">
+                                                                                                            <div className={`timeline-label ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
                                                                                                                 {stage.label}
                                                                                                             </div>
 
                                                                                                             {isCurrent && (
                                                                                                                 <button
-                                                                                                                    style={{
-                                                                                                                        padding: '4px 12px',
-                                                                                                                        borderRadius: '6px',
-                                                                                                                        border: 'none',
-                                                                                                                        background: '#2563eb',
-                                                                                                                        color: '#fff',
-                                                                                                                        fontSize: '11px',
-                                                                                                                        fontWeight: '600',
-                                                                                                                        cursor: 'pointer',
-                                                                                                                        transition: 'all 0.2s',
-                                                                                                                        whiteSpace: 'nowrap',
-                                                                                                                        marginLeft: '12px'
-                                                                                                                    }}
+                                                                                                                    className="timeline-update-btn"
                                                                                                                     onClick={() => handleStageUpdateLocal(unit.id, buffaloNum, stage.id + 1)}
                                                                                                                 >
                                                                                                                     {stage.id === 8 ? 'Confirm Delivery' : 'Update'}
@@ -591,20 +519,12 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                                                             )}
 
                                                                                                             {isStepCompleted && (
-                                                                                                                <span style={{
-                                                                                                                    padding: '4px 12px',
-                                                                                                                    borderRadius: '6px',
-                                                                                                                    background: '#dcfce7',
-                                                                                                                    color: '#166534',
-                                                                                                                    fontSize: '11px',
-                                                                                                                    fontWeight: '600',
-                                                                                                                    marginLeft: '12px'
-                                                                                                                }}>
+                                                                                                                <span className="timeline-completed-badge">
                                                                                                                     {stage.id === 8 ? 'Delivered' : 'Completed'}
                                                                                                                 </span>
                                                                                                             )}
                                                                                                         </div>
-                                                                                                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                                                                                                        <div className="timeline-time">
                                                                                                             {stageTime !== '-' ? stageTime : ''}
                                                                                                         </div>
                                                                                                     </div>
@@ -617,7 +537,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                         })}
                                                                     </div>
                                                                 ) : (
-                                                                    <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '14px', border: '2px dashed #e2e8f0', borderRadius: '16px' }}>
+                                                                    <div className="no-tracking-placeholder">
                                                                         Select a unit to see tracking progress
                                                                     </div>
                                                                 )}
@@ -634,7 +554,13 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                     </tbody>
                 </table>
             </div>
-        </div>
+
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+            />
+        </div >
     );
 };
 

@@ -1,11 +1,12 @@
 import React from 'react';
 import BuffaloTree from '../BuffaloTree';
+import '../BuffaloTree.css';
 
 const BuffaloTreeTab: React.FC = () => {
     return (
         <div>
             {/* Buffalo Tree tab content */}
-            <div style={{ padding: '1rem' }}>
+            <div className="buffalo-tree-tab-container">
                 <h2>Buffalo Family Tree</h2>
                 <div className="tree-wrapper">
                     {/* Render BuffaloTree component */}

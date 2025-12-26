@@ -1,0 +1,27 @@
+.existing-customers-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.existing-customers-th {
+    white-space: nowrap;
+    text-align: center;
+    padding: 12px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.existing-customers-th-sortable {
+    cursor: pointer;
+}
+
+.existing-customers-no-data {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+}
+
+.existing-customers-td {
+    text-align: center;
+    padding: 12px;
+    border-bottom: 1px solid #f3f4f6;
+}

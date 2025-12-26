@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Plus } from 'lucide-react';
-import { userService } from '../services/api';
-import { CreateUserRequest } from '../types';
+import { userService } from '../../services/api';
+import { CreateUserRequest } from '../../types';
 
 interface AddUserModalProps {
   isOpen: boolean;

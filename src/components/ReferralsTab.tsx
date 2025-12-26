@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Plus, RefreshCw, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { userService } from '../services/api';
 import { User } from '../types';
-import AddUserModal from './AddUserModal';
+import AddUserModal from './modals/AddUserModal';
 import { useTableSortAndSearch } from '../hooks/useTableSortAndSearch';
+import './ReferralsTab.css';
 
 const ReferralsTab: React.FC = () => {
   const [referrals, setReferrals] = useState<User[]>([]);
@@ -93,7 +94,7 @@ const ReferralsTab: React.FC = () => {
         <div className="flex gap-3">
           <button
             onClick={fetchReferrals}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', color: '#6b7280', borderRadius: '0.5rem', cursor: 'pointer' }}
+            className="refresh-btn"
           >
             <RefreshCw className="w-4 h-4" />
             Refresh

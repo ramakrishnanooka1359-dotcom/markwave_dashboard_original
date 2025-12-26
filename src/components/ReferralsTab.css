@@ -1,0 +1,16 @@
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: #6b7280;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+.refresh-btn:hover {
+    background-color: #f3f4f6;
+}

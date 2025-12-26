@@ -2,6 +2,7 @@ import React from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import { setEditReferralModal } from '../../store/slices/uiSlice';
+import './EditReferralModal.css';
 
 interface EditReferralModalProps {
     editFormData: {
@@ -31,62 +32,38 @@ const EditReferralModal: React.FC<EditReferralModalProps> = ({
     if (!showEditModal || !editingUser) return null;
 
     return (
-        <div className="modal" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="edit-referral-modal-overlay" onClick={onClose}>
+            <div className="edit-referral-modal-content" onClick={(e) => e.stopPropagation()}>
                 <button
                     onClick={onClose}
-                    style={{
-                        position: 'absolute',
-                        top: '1rem',
-                        right: '1rem',
-                        background: 'none',
-                        border: 'none',
-                        fontSize: '1.5rem',
-                        color: '#9ca3af',
-                        cursor: 'pointer',
-                        width: '2rem',
-                        height: '2rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '50%',
-                        transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f3f4f6';
-                        e.currentTarget.style.color = '#374151';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.color = '#9ca3af';
-                    }}
+                    className="edit-referral-close-btn"
                 >
                     ×
                 </button>
-                <h3>Edit Referral</h3>
-                <form onSubmit={onSubmit}>
-                    <label>
+                <h3 className="edit-referral-title">Edit Referral</h3>
+                <form onSubmit={onSubmit} className="edit-referral-form">
+                    <label className="edit-referral-label">
                         Mobile:
                         <input
                             type="tel"
                             name="mobile"
                             value={editFormData.mobile}
                             disabled
-                            style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                            className="edit-referral-input edit-referral-input-disabled"
                             placeholder="Mobile number (cannot be changed)"
                         />
                     </label>
-                    <label>
+                    <label className="edit-referral-label">
                         Role:
                         <input
                             type="text"
                             name="role"
                             value={editingUser.role || 'Investor'}
                             disabled
-                            style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                            className="edit-referral-input edit-referral-input-disabled"
                         />
                     </label>
-                    <label>
+                    <label className="edit-referral-label">
                         First Name:
                         <input
                             type="text"
@@ -95,9 +72,10 @@ const EditReferralModal: React.FC<EditReferralModalProps> = ({
                             onChange={onInputChange}
                             required
                             placeholder="Enter first name"
+                            className="edit-referral-input"
                         />
                     </label>
-                    <label>
+                    <label className="edit-referral-label">
                         Last Name:
                         <input
                             type="text"
@@ -106,9 +84,10 @@ const EditReferralModal: React.FC<EditReferralModalProps> = ({
                             onChange={onInputChange}
                             required
                             placeholder="Enter last name"
+                            className="edit-referral-input"
                         />
                     </label>
-                    <label>
+                    <label className="edit-referral-label">
                         Referred By(Mobile):
                         <input
                             type="tel"
@@ -118,9 +97,10 @@ const EditReferralModal: React.FC<EditReferralModalProps> = ({
                             onBlur={onBlur}
                             required
                             placeholder="Enter referrer's mobile"
+                            className="edit-referral-input"
                         />
                     </label>
-                    <label>
+                    <label className="edit-referral-label">
                         Referred By(Name):
                         <input
                             type="text"
@@ -129,10 +109,11 @@ const EditReferralModal: React.FC<EditReferralModalProps> = ({
                             onChange={onInputChange}
                             required
                             placeholder="Enter referrer's name"
+                            className="edit-referral-input"
                         />
                     </label>
-                    <button type="submit">Update</button>
-                    <button type="button" onClick={onClose}>Cancel</button>
+                    <button type="submit" className="edit-referral-submit-btn">Update</button>
+                    <button type="button" onClick={onClose} className="edit-referral-cancel-btn">Cancel</button>
                 </form>
             </div>
         </div>

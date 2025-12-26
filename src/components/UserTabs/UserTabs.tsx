@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './UserTabs.css';
 import axios from 'axios';
-import { API_ENDPOINTS } from '../config/api';
-import { useTableSortAndSearch } from '../hooks/useTableSortAndSearch';
-import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, PanelLeft, PanelLeftClose, Menu, X, ChevronRight, ChevronDown, Briefcase, DollarSign, Package, Settings, MapPin } from 'lucide-react';
-import HealthStatus from './HealthStatus';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import type { RootState } from '../store';
+import { API_ENDPOINTS } from '../../config/api';
+import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, MapPin } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import type { RootState } from '../../store';
 import {
   setActiveTab,
   toggleSidebar,
@@ -15,33 +13,34 @@ import {
   setReferralModalOpen,
   setEditReferralModal,
   setProofModal,
-} from '../store/slices/uiSlice';
+} from '../../store/slices/uiSlice';
 import {
-  setPendingUnits,
-  setOrdersError,
-  setSearchQuery,
-  setPaymentFilter,
-  setStatusFilter,
-  setExpandedOrderId,
-  setActiveUnitIndex,
-  setShowFullDetails,
+  fetchPendingUnits,
+  approveOrder,
+  rejectOrder,
   updateTrackingData,
-  setInitialTracking,
-} from '../store/slices/ordersSlice';
-import { setReferralUsers, setExistingCustomers } from '../store/slices/usersSlice';
-import { setProducts } from '../store/slices/productsSlice';
+} from '../../store/slices/ordersSlice';
+import {
+  fetchReferralUsers,
+  fetchExistingCustomers,
+  createReferralUser,
+  setReferralUsers
+} from '../../store/slices/usersSlice';
+import { fetchProducts } from '../../store/slices/productsSlice';
 
 // Extracted Components
-import ImageNamesModal from './modals/ImageNamesModal';
-import AdminDetailsModal from './modals/AdminDetailsModal';
-import ReferralModal from './modals/ReferralModal';
-import EditReferralModal from './modals/EditReferralModal';
-import OrdersTab from './tabs/OrdersTab';
-import NonVerifiedUsersTab from './tabs/NonVerifiedUsersTab';
-import ExistingCustomersTab from './tabs/ExistingCustomersTab';
-import ProductsTab from './tabs/ProductsTab';
-import BuffaloTreeTab from './tabs/BuffaloTreeTab';
-import TrackingTab from './tabs/TrackingTab';
+import ImageNamesModal from '../modals/ImageNamesModal';
+import AdminDetailsModal from '../modals/AdminDetailsModal';
+import ReferralModal from '../modals/ReferralModal';
+import EditReferralModal from '../modals/EditReferralModal';
+
+// Lazy Load Tabs
+const OrdersTab = React.lazy(() => import('../sidebar-tabs/OrdersTab'));
+const NonVerifiedUsersTab = React.lazy(() => import('../sidebar-tabs/NonVerifiedUsersTab'));
+const ExistingCustomersTab = React.lazy(() => import('../sidebar-tabs/ExistingCustomersTab'));
+const ProductsTab = React.lazy(() => import('../sidebar-tabs/ProductsTab'));
+const BuffaloTreeTab = React.lazy(() => import('../sidebar-tabs/BuffaloTreeTab'));
+const TrackingTab = React.lazy(() => import('../sidebar-tabs/TrackingTab'));
 
 
 interface UserTabsProps {
@@ -58,15 +57,11 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   const dispatch = useAppDispatch();
 
   // UI State from Redux
-  const { isSidebarOpen, activeTab, showAdminDetails } = useAppSelector((state: RootState) => state.ui);
-  const { referral: showModal, editReferral: { isOpen: showEditModal, user: editingUser }, proof: { isOpen: showProofModal, data: selectedProofData } } = useAppSelector((state: RootState) => state.ui.modals);
+  const { isSidebarOpen, activeTab } = useAppSelector((state: RootState) => state.ui);
+  const { referral: showModal, editReferral: { isOpen: showEditModal, user: editingUser } } = useAppSelector((state: RootState) => state.ui.modals);
 
   // Business Logic State from Redux
   const { referralUsers, existingCustomers } = useAppSelector((state: RootState) => state.users);
-  const products = useAppSelector((state: RootState) => state.products.products);
-  const { pendingUnits, error: ordersError } = useAppSelector((state: RootState) => state.orders);
-  const { searchQuery, paymentFilter, statusFilter } = useAppSelector((state: RootState) => state.orders.filters);
-  const { expandedOrderId, activeUnitIndex, showFullDetails } = useAppSelector((state: RootState) => state.orders.expansion);
   const trackingData = useAppSelector((state: RootState) => state.orders.trackingData);
 
   const [formData, setFormData] = useState({
@@ -99,24 +94,6 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     return () => window.removeEventListener('resize', handleResize);
   }, [dispatch]);
 
-
-
-  // --- Referral Users Table Logic ---
-  const {
-    filteredData: filteredReferrals,
-
-    sortConfig: referralSortConfig,
-    requestSort: requestReferralSort,
-  } = useTableSortAndSearch(referralUsers, { key: '', direction: 'asc' });
-
-  // --- Existing Users Table Logic ---
-  const {
-    filteredData: filteredExistingUsers,
-
-    sortConfig: existingUsersSortConfig,
-    requestSort: requestExistingUsersSort,
-  } = useTableSortAndSearch(existingCustomers, { key: '', direction: 'asc' });
-
   const getSortIcon = (key: string, currentSortConfig: any) => {
     if (currentSortConfig.key !== key) return '';
     return currentSortConfig.direction === 'asc' ? '↑' : '↓';
@@ -124,90 +101,22 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
 
   useEffect(() => {
-    const fetchReferralUsers = async () => {
-      try {
-        const response = await axios.get(API_ENDPOINTS.getReferrals());
-        dispatch(setReferralUsers(response.data.users || []));
-      } catch (error) {
-        dispatch(setReferralUsers([])); // Clear users on error
-      }
-    };
-
-
-    const fetchExistingCustomers = async () => {
-      try {
-        const response = await axios.get(API_ENDPOINTS.getUsers());
-        dispatch(setExistingCustomers(response.data.users || []));
-      } catch (error) {
-        dispatch(setExistingCustomers([])); // Clear users on error
-      }
-    };
-
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get(API_ENDPOINTS.getProducts());
-        const productsData = response.data?.products || [];
-        dispatch(setProducts(productsData));
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        dispatch(setProducts([])); // Clear products on error
-      }
-    };
-
-    // Only fetch data for the user-related tabs. The 'tree' tab is client-side.
+    // Only fetch data for the user-related tabs.
     if (activeTab === 'orders') {
-      fetchPendingUnits();
+      dispatch(fetchPendingUnits(adminMobile));
     } else if (activeTab === 'nonVerified') {
-      fetchReferralUsers();
+      dispatch(fetchReferralUsers());
     } else if (activeTab === 'existing') {
-      fetchExistingCustomers();
+      dispatch(fetchExistingCustomers());
     } else if (activeTab === 'products') {
-      fetchProducts();
+      dispatch(fetchProducts());
     }
-  }, [activeTab, dispatch]); // Added dispatch to deps
-
-  const fetchPendingUnits = async () => {
-    try {
-      dispatch(setOrdersError(null));
-      const response = await axios.get(API_ENDPOINTS.getPendingUnits(), {
-        headers: {
-          'X-Admin-Mobile': adminMobile,
-        },
-      });
-      const units = response.data?.orders || [];
-      dispatch(setPendingUnits(units));
-    } catch (error: any) {
-      console.error('Error fetching pending units:', error);
-      const rawDetail = error?.response?.data?.detail;
-      let msg: string;
-      if (typeof rawDetail === 'string') {
-        msg = rawDetail;
-      } else if (Array.isArray(rawDetail)) {
-        const first = rawDetail[0];
-        if (first && typeof first === 'object' && 'msg' in first) {
-          msg = String(first.msg);
-        } else {
-          msg = 'Failed to load orders';
-        }
-      } else if (rawDetail && typeof rawDetail === 'object' && 'msg' in rawDetail) {
-        msg = String(rawDetail.msg);
-      } else {
-        msg = 'Failed to load orders';
-      }
-      dispatch(setOrdersError(msg));
-      dispatch(setPendingUnits([]));
-    }
-  };
+  }, [activeTab, dispatch, adminMobile]);
 
   const handleApproveClick = async (unitId: string) => {
     try {
-      await axios.post(API_ENDPOINTS.approveUnit(), { orderId: unitId }, {
-        headers: {
-          'X-Admin-Mobile': adminMobile,
-        }
-      });
+      await dispatch(approveOrder({ unitId, adminMobile })).unwrap();
       alert('Order approved successfully!');
-      fetchPendingUnits();
     } catch (error) {
       console.error('Error approving order:', error);
       alert('Failed to approve order.');
@@ -216,13 +125,8 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   const handleReject = async (unitId: string) => {
     if (!window.confirm('Are you sure you want to reject this order?')) return;
     try {
-      await axios.post(API_ENDPOINTS.rejectUnit(), { orderId: unitId }, {
-        headers: {
-          'X-Admin-Mobile': adminMobile,
-        }
-      });
+      await dispatch(rejectOrder({ unitId, adminMobile })).unwrap();
       alert('Order rejected successfully!');
-      fetchPendingUnits();
     } catch (error) {
       console.error('Error rejecting order:', error);
       alert('Failed to reject order.');
@@ -271,8 +175,6 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
       }
     } catch (error) {
       console.log('Referrer not found or error fetching details');
-      // Optional: Clear the name field if user not found? 
-      // For now, let's keep the user input or allow manual entry if API fails.
     }
   };
 
@@ -287,19 +189,10 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post(API_ENDPOINTS.createUser(), {
-        mobile: formData.mobile,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        refered_by_mobile: formData.refered_by_mobile,
-        refered_by_name: formData.refered_by_name,
-        role: formData.role,
-      });
+      const result = await dispatch(createReferralUser(formData)).unwrap();
 
-      console.log('User response:', response.data);
-
-      // Check if user already exists
-      if (response.data.message === 'User already exists') {
+      // Check checks handled in thunk rejection or success
+      if (result.message === 'User already exists') {
         alert('User already exists with this mobile number.');
       } else {
         alert('User created successfully!');
@@ -316,14 +209,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         role: 'Investor',
       });
 
-      // Refresh the referral users list
-      if (activeTab === 'nonVerified') {
-        const refreshResponse = await axios.get(API_ENDPOINTS.getReferrals());
-        dispatch(setReferralUsers(refreshResponse.data.users || []));
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating user:', error);
-      alert('Error creating user. Please try again.');
+      alert(error || 'Error creating user. Please try again.');
     }
   };
 
@@ -426,37 +314,40 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     dispatch(setProofModal({ isOpen: false }));
   };
 
-  const filteredUnits = pendingUnits.filter((entry: any) => {
-    const unit = entry.order || {};
-    const tx = entry.transaction || {};
-    const inv = entry.investor || {};
-
-
-    let matchesSearch = true;
-    if (searchQuery) {
-      const query = searchQuery.toLocaleLowerCase();
-      matchesSearch = (
-        (unit.id && String(unit.id).toLocaleLowerCase().includes(query)) ||
-        (unit.userId && String(unit.userId).toLocaleLowerCase().includes(query)) ||
-        (unit.breedId && String(unit.breedId).toLocaleLowerCase().includes(query)) ||
-        (inv.name && String(inv.name).toLocaleLowerCase().includes(query))
-      )
-    }
-
-    // 2. Payment Filter
-    let matchesPayment = true;
-    if (paymentFilter !== 'All Payments') {
-      matchesPayment = tx.paymentType === paymentFilter;
-    }
-
-    // 3. Status Filter
-    let matchesStatus = true;
-    if (statusFilter !== 'All Status') {
-      matchesStatus = unit.paymentStatus === statusFilter;
-    }
-
-    return matchesSearch && matchesPayment && matchesStatus;
-  });
+  /* --- Tab Content Switch --- */
+  const renderContentSwitch = () => {
+    return (
+      <React.Suspense fallback={
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: '300px' }}>
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      }>
+        {(() => {
+          switch (activeTab) {
+            case 'orders':
+              return (
+                <OrdersTab
+                  handleApproveClick={handleApproveClick}
+                  handleReject={handleReject}
+                />
+              );
+            case 'tracking':
+              return <TrackingTab />;
+            case 'nonVerified':
+              return <NonVerifiedUsersTab getSortIcon={getSortIcon} />;
+            case 'existing':
+              return <ExistingCustomersTab getSortIcon={getSortIcon} />;
+            case 'tree':
+              return <BuffaloTreeTab />;
+            case 'products':
+              return <ProductsTab />;
+            default:
+              return <OrdersTab handleApproveClick={handleApproveClick} handleReject={handleReject} />;
+          }
+        })()}
+      </React.Suspense>
+    );
+  };
 
   return (
     <div className="app-container">
@@ -469,7 +360,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
       {/* Global Header - Top Full Width */}
       <header style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Left: Mobile Toggle, Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '50px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <button
             className="mobile-menu-toggle"
             onClick={() => dispatch(toggleSidebar())}
@@ -484,62 +375,61 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
             {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
 
-          <img
-            src={require('../logo.svg').default}
-            alt="Markwave Logo"
-            style={{ height: '32px', marginLeft: '50px' }}
-          />
+          <svg width="240" height="60" viewBox="0 0 240 60" xmlns="http://www.w3.org/2000/svg" style={{ height: '45px', marginLeft: '0px' }}>
+            <text
+              x="10"
+              y="38"
+              fontSize="32"
+              fontFamily="Inter, sans-serif"
+              fontWeight="600"
+              fill="#FFFFFF"
+            >
+              mark
+            </text>
+            <text
+              x="90"
+              y="38"
+              fontSize="32"
+              fontFamily="Inter, sans-serif"
+              fontWeight="600"
+              fill="#38BDF8"
+            >
+              wave
+            </text>
+            <path
+              d="M90 45 C105 35, 120 35, 135 45"
+              fill="none"
+              stroke="#38BDF8"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </svg>
         </div>
 
         {/* Center: Title */}
-        <div style={{
-          position: 'absolute',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <h6 style={{
-            margin: 0,
-            fontSize: '1.25rem',
-            fontWeight: 600,
-            color: 'white',
-            whiteSpace: 'nowrap'
-          }}>
+        {/* Centered Title */}
+        <div className="header-center-title">
+          <h6 className="header-brand-text">
             Animalkart Dashboard
           </h6>
         </div>
 
         {/* Right Status & Profile */}
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{
-            background: 'rgba(255,255,255,0.1)',
-            padding: '6px 16px',
-            borderRadius: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }}></div>
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'white' }}>Online</span>
+        <div className="header-right">
+          <div className="status-pill">
+            <div className="status-dot-green"></div>
+            <span className="status-text">Online</span>
           </div>
 
           {/* Admin Profile in Header (Right of Online) */}
           <div
             onClick={() => dispatch(setShowAdminDetails(true))}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginLeft: '24px',
-              cursor: 'pointer'
-            }}
+            className="admin-header-profile"
           >
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <span style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem' }}>{adminName}</span>
+            <div className="admin-name-container">
+              <span className="admin-name-text">{adminName}</span>
             </div>
-            <div className="avatar-circle" style={{ width: '40px', height: '40px', fontSize: '1rem', border: '2px solid rgba(255,255,255,0.2)' }}>
+            <div className="avatar-circle admin-avatar-small">
               {adminName ? adminName.substring(0, 2).toUpperCase() : 'AD'}
             </div>
           </div>
@@ -671,32 +561,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
         {/* Main Content Area */}
         <main className="main-content">
-          <div className="tab-content">
-            {activeTab === 'orders' && (
-              <OrdersTab
-                handleApproveClick={handleApproveClick}
-                handleReject={handleReject}
-              />
-            )}
-
-            {activeTab === 'nonVerified' && (
-              <NonVerifiedUsersTab
-                getSortIcon={getSortIcon}
-              />
-            )}
-
-            {activeTab === 'existing' && (
-              <ExistingCustomersTab
-                getSortIcon={getSortIcon}
-              />
-            )}
-
-            {activeTab === 'tree' && <BuffaloTreeTab />}
-
-            {activeTab === 'products' && <ProductsTab />}
-
-            {activeTab === 'tracking' && <TrackingTab />}
-          </div>
+          {renderContentSwitch()}
 
           {/* Floating + Icon at bottom left - only show on Referral tab */}
           {activeTab === 'nonVerified' && (
@@ -754,7 +619,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         presentLogin={presentLogin}
       />
 
-    </div>
+    </div >
   );
 };
 

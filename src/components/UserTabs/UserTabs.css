@@ -232,6 +232,82 @@
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     z-index: 50;
     color: white;
+    position: relative;
+    /* For absolute centering */
+  }
+
+  /* Header Title Centering */
+  .header-center-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .header-brand-text {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+  }
+
+  /* Header Right Section */
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+
+  .status-pill {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px 16px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .status-dot-green {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #22c55e;
+  }
+
+  .status-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+  }
+
+  /* Admin Header Profile */
+  .admin-header-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: 24px;
+    cursor: pointer;
+  }
+
+  .admin-name-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .admin-name-text {
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .admin-avatar-small {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
   }
 
   /* Main Content Area */
