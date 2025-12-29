@@ -17,20 +17,30 @@ const NonVerifiedUsersTab: React.FC<NonVerifiedUsersTabProps> = ({
     const dispatch = useAppDispatch();
     const { referralUsers, loading: usersLoading } = useAppSelector((state: RootState) => state.users);
 
+    const [activeSubTab, setActiveSubTab] = useState<'verified' | 'non-verified'>('non-verified');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 15;
+
+    // Filter for Admins and then split by verification
+    const adminUsers = React.useMemo(() => {
+        return referralUsers.filter(user => user.role === 'Admin');
+    }, [referralUsers]);
+
+    const verifiedAdmins = React.useMemo(() => adminUsers.filter(user => user.verified), [adminUsers]);
+    const nonVerifiedAdmins = React.useMemo(() => adminUsers.filter(user => !user.verified), [adminUsers]);
+
+    const dataToDisplay = activeSubTab === 'verified' ? verifiedAdmins : nonVerifiedAdmins;
 
     const {
         filteredData: filteredReferrals,
         requestSort: requestReferralSort,
         sortConfig: referralSortConfig
-    } = useTableSortAndSearch(referralUsers);
+    } = useTableSortAndSearch(dataToDisplay);
 
-    // Reset to page 1 if filtered results change (e.g. search)
-    // Note: useTableSortAndSearch internal filteredData reference changes on filter updates
+    // Reset to page 1 if filtered results change or sub-tab changes
     React.useEffect(() => {
         setCurrentPage(1);
-    }, [filteredReferrals.length]);
+    }, [filteredReferrals.length, activeSubTab]);
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -40,9 +50,26 @@ const NonVerifiedUsersTab: React.FC<NonVerifiedUsersTabProps> = ({
     const handleRowClick = (user: any) => {
         dispatch(setEditReferralModal({ isOpen: true, user }));
     };
+
     return (
         <div className="non-verified-users-container">
-            <h2 className="non-verified-users-title">User Referrals</h2>
+            <div className="non-verified-users-header">
+                <h2 className="non-verified-users-title">Admin Referrals</h2>
+                <div className="admin-sub-tabs">
+                    <button
+                        className={`sub-tab-btn ${activeSubTab === 'verified' ? 'active' : ''}`}
+                        onClick={() => setActiveSubTab('verified')}
+                    >
+                        Verified Admins ({verifiedAdmins.length})
+                    </button>
+                    <button
+                        className={`sub-tab-btn ${activeSubTab === 'non-verified' ? 'active' : ''}`}
+                        onClick={() => setActiveSubTab('non-verified')}
+                    >
+                        Non-Verified Users ({nonVerifiedAdmins.length})
+                    </button>
+                </div>
+            </div>
 
             <div className="table-container non-verified-table-container">
                 <table className="user-table non-verified-user-table">
@@ -56,7 +83,6 @@ const NonVerifiedUsersTab: React.FC<NonVerifiedUsersTabProps> = ({
                             <th className="non-verified-th non-verified-th-sortable" onClick={() => requestReferralSort('refered_by_name')}>Referred By {getSortIcon('refered_by_name', referralSortConfig)}</th>
                             <th className="non-verified-th non-verified-th-sortable" onClick={() => requestReferralSort('refered_by_mobile')}>Referrer Mobile {getSortIcon('refered_by_mobile', referralSortConfig)}</th>
                             <th className="non-verified-th non-verified-th-sortable" onClick={() => requestReferralSort('verified')}>Verified {getSortIcon('verified', referralSortConfig)}</th>
-                            <th className="non-verified-th">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -80,14 +106,10 @@ const NonVerifiedUsersTab: React.FC<NonVerifiedUsersTabProps> = ({
                                     <td className="non-verified-td">{user.role}</td>
                                     <td className="non-verified-td">{user.refered_by_name || '-'}</td>
                                     <td className="non-verified-td">{user.refered_by_mobile || '-'}</td>
-                                    <td className="non-verified-td">{user.verified ? 'Yes' : 'No'}</td>
                                     <td className="non-verified-td">
-                                        <button
-                                            onClick={() => handleRowClick(user)}
-                                            className="non-verified-edit-btn"
-                                        >
-                                            Edit
-                                        </button>
+                                        <span className={`status-pill ${user.verified ? 'status-pill-verified' : 'status-pill-non-verified'}`}>
+                                            {user.verified ? 'Yes' : 'No'}
+                                        </span>
                                     </td>
                                 </tr>
                             ))

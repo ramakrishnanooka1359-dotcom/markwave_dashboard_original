@@ -144,6 +144,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
       dispatch(fetchReferralUsers());
     } else if (activeTab === 'existing') {
       dispatch(fetchExistingCustomers());
+      dispatch(fetchReferralUsers());
     } else if (activeTab === 'products') {
       dispatch(fetchProducts());
     }
