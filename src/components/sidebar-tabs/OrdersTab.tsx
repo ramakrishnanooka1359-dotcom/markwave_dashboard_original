@@ -7,10 +7,6 @@ import {
     setSearchQuery,
     setPaymentFilter,
     setStatusFilter,
-    setExpandedOrderId,
-    setActiveUnitIndex,
-    setShowFullDetails,
-    updateTrackingData,
 } from '../../store/slices/ordersSlice';
 import { API_ENDPOINTS } from '../../config/api';
 import './OrdersTab.css';
@@ -66,7 +62,6 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
     const pendingUnits = useAppSelector((state: RootState) => state.orders.pendingUnits);
     const { error: ordersError, loading: ordersLoading } = useAppSelector((state: RootState) => state.orders);
     const { searchQuery, paymentFilter, statusFilter } = useAppSelector((state: RootState) => state.orders.filters);
-    const { expandedOrderId, activeUnitIndex, showFullDetails } = useAppSelector((state: RootState) => state.orders.expansion);
     const trackingData = useAppSelector((state: RootState) => state.orders.trackingData);
 
     // Debounce Search
@@ -91,15 +86,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
     }, [searchQuery, paymentFilter, statusFilter]);
 
     // Persist expansion state
-    useEffect(() => {
-        if (expandedOrderId === null) localStorage.removeItem('orders_expandedOrderId');
-        else localStorage.setItem('orders_expandedOrderId', expandedOrderId);
 
-        if (activeUnitIndex === null) localStorage.removeItem('orders_activeUnitIndex');
-        else localStorage.setItem('orders_activeUnitIndex', String(activeUnitIndex));
-
-        localStorage.setItem('orders_showFullDetails', String(showFullDetails));
-    }, [expandedOrderId, activeUnitIndex, showFullDetails]);
 
     // Persist tracking data
     useEffect(() => {
@@ -187,19 +174,6 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
     const handleViewProof = useCallback((transaction: any, investor: any) => {
         dispatch(setProofModal({ isOpen: true, data: { ...transaction, name: investor.name } }));
     }, [dispatch]);
-
-    const handleStageUpdateLocal = useCallback((orderId: string, buffaloNum: number, nextStageId: number) => {
-        const now = new Date();
-        const date = now.toLocaleDateString('en-GB').replace(/\//g, '-');
-        const time = now.toLocaleTimeString('en-GB');
-        dispatch(updateTrackingData({ key: `${orderId}-${buffaloNum}`, stageId: nextStageId, date, time }));
-    }, [dispatch]);
-
-    const getTrackingForBuffalo = useCallback((orderId: string, buffaloNum: number, initialStatus: string) => {
-        const key = `${orderId}-${buffaloNum}`;
-        if (trackingData[key]) return trackingData[key];
-        return { currentStageId: 1, history: { 1: { date: '24-05-2025', time: '10:30:00' } } };
-    }, [trackingData]);
 
     const formatIndiaDate = useCallback((val: any) => {
         if (!val || (typeof val !== 'string' && typeof val !== 'number')) return String(val);
@@ -381,8 +355,6 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                 const unit = entry.order || {};
                                 const tx = entry.transaction || entry.transation || {};
                                 const inv = entry.investor || {};
-                                const isExpanded = expandedOrderId === unit.id;
-                                const canExpand = true;
                                 const serialNumber = indexOfFirstItem + index + 1;
 
                                 return (
@@ -417,25 +389,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                 })()}
                                             </td>
                                             <td>{unit.numUnits}</td>
-                                            <td>
-                                                <button
-                                                    onClick={() => {
-                                                        if (!canExpand) return;
-                                                        if (isExpanded) {
-                                                            dispatch(setExpandedOrderId(null));
-                                                            dispatch(setActiveUnitIndex(null));
-                                                            dispatch(setShowFullDetails(false));
-                                                        } else {
-                                                            dispatch(setExpandedOrderId(unit.id));
-                                                            dispatch(setActiveUnitIndex(0));
-                                                            dispatch(setShowFullDetails(false));
-                                                        }
-                                                    }}
-                                                    className={`expand-order-btn ${canExpand ? 'can-expand' : 'disabled'}`}
-                                                >
-                                                    {unit.id}
-                                                </button>
-                                            </td>
+                                            <td>{unit.id}</td>
                                             <td>{inv.mobile}</td>
                                             <td>{inv.email || '-'}</td>
                                             <td>{tx.amount ?? '-'}</td>
@@ -542,171 +496,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                 </div>
                                             </td>}
                                         </tr>
-                                        {isExpanded && canExpand && (
-                                            <tr className="expanded-row">
-                                                <td colSpan={11} className="expanded-row-content">
-                                                    <div className="order-expand-animation expanded-details-container">
-                                                        <div className="expanded-top-section">
-                                                            <div className="details-card">
-                                                                <div className={`details-header ${showFullDetails ? 'border-bottom' : ''}`}>
-                                                                    <div className="details-grid">
-                                                                        {[
-                                                                            { label: 'Payment Method', value: tx.paymentType || '-' },
-                                                                            { label: 'Total Amount', value: `₹${tx.amount ?? '-'}` },
-                                                                            { label: 'Approval Date', value: formatIndiaDateHeader(unit.updatedAt || unit.updated_at || unit.createdAt || unit.created_at || tx.updatedAt || tx.updated_at || tx.createdAt || tx.created_at || unit.paymentApprovedAt || tx.receipt_date || unit.date || tx.date || unit.approved_at || unit.approvedAt || tx.approved_at || tx.approvedAt || unit.order_date || tx.payment_date) },
-                                                                            // { label: 'Payment Mode', value: tx.paymentType || 'MANUAL_PAYMENT' },
-                                                                            { label: 'Breed ID', value: unit.breedId }
-                                                                        ].map((item, idx) => (
-                                                                            <div key={idx} className="details-item">
-                                                                                <div className="details-label">{item.label}</div>
-                                                                                <div className="details-value">{item.value}</div>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                    <button
-                                                                        onClick={() => dispatch(setShowFullDetails(!showFullDetails))}
-                                                                        className={`toggle-details-btn ${showFullDetails ? 'open' : 'closed'}`}
-                                                                    >
-                                                                        suiru
-                                                                    </button>
-                                                                </div>
 
-                                                                {showFullDetails && (
-                                                                    <div className="order-expand-animation extra-details-grid">
-                                                                        {(() => {
-                                                                            const excludedKeys = ['id', 'name', 'mobile', 'email', 'amount', 'paymentType', 'paymentStatus', 'numUnits', 'order', 'transaction', 'investor', 'password', 'token', 'images', 'cpfUnitCost', 'unitCost', 'base_unit_cost', 'baseUnitCost', 'cpf_unit_cost', 'unit_cost', 'otp', 'first_name', 'last_name', 'otp_verified', 'otp_created_at', 'is_form_filled', 'occupation', 'updatedAt', 'updated_at', 'createdAt', 'created_at', 'breedId', 'breed_id', 'paymentApprovedAt', 'receipt_date', 'date', 'approved_at', 'approvedAt', 'order_date', 'payment_date'];
-                                                                            const combinedData = { ...unit, ...tx, ...inv };
-
-                                                                            return Object.entries(combinedData)
-                                                                                .filter(([key, value]) => {
-                                                                                    const isExcluded = excludedKeys.includes(key);
-                                                                                    const lowerKey = key.toLowerCase();
-                                                                                    const isUrlKey = lowerKey.includes('url') || lowerKey.includes('link') || lowerKey.includes('proof') || lowerKey.includes('image');
-                                                                                    const isUrlValue = typeof value === 'string' && (value.startsWith('http') || value.startsWith('/api/'));
-                                                                                    return !isExcluded && !isUrlKey && !isUrlValue && value !== null && value !== undefined && typeof value !== 'object';
-                                                                                })
-                                                                                .map(([key, value], idx) => (
-                                                                                    <div key={`extra-${idx}`} className="details-item">
-                                                                                        <div className="details-label">
-                                                                                            {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase())}
-                                                                                        </div>
-                                                                                        <div className="details-value">{formatIndiaDate(value)}</div>
-                                                                                    </div>
-                                                                                ));
-                                                                        })()}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="expanded-bottom-section">
-                                                            <div className="units-select-sidebar">
-                                                                <div className="units-select-title">Select Unit</div>
-                                                                <div className="units-list">
-                                                                    {Array.from({ length: unit.numUnits || 0 }).map((_, i) => (
-                                                                        <button
-                                                                            key={i}
-                                                                            onClick={() => dispatch(setActiveUnitIndex(activeUnitIndex === i ? null : i))}
-                                                                            className={`unit-select-btn ${activeUnitIndex === i ? 'active' : 'inactive'}`}
-                                                                        >
-                                                                            <span>Unit {i + 1}</span>
-                                                                            <span className="unit-breed-id">{unit.breedId || 'MURRAH-001'}</span>
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="tracking-content">
-                                                                {activeUnitIndex !== null ? (
-                                                                    <div className="order-expand-animation tracking-grid">
-                                                                        {[1, 2].map((buffaloNum) => {
-                                                                            const tracker = trackingData[`${unit.id}-${buffaloNum}`] || getTrackingForBuffalo(unit.id, buffaloNum, unit.paymentStatus);
-                                                                            const currentStageId = tracker.currentStageId;
-
-                                                                            const timelineStages = [
-                                                                                { id: 1, label: 'Order Placed' },
-                                                                                { id: 2, label: 'Payment Pending' },
-                                                                                { id: 3, label: 'Order Confirm' },
-                                                                                { id: 4, label: 'Order Approved' },
-                                                                                { id: 5, label: 'Order in Market' },
-                                                                                { id: 6, label: 'Order in Quarantine' },
-                                                                                { id: 7, label: 'In Transit' },
-                                                                                { id: 8, label: 'Order Delivered' }
-                                                                            ];
-
-                                                                            return (
-                                                                                <div key={buffaloNum} className="tracking-card">
-                                                                                    <div className="tracking-card-header">
-                                                                                        Cycle-{buffaloNum}
-                                                                                    </div>
-
-                                                                                    <div className="timeline-container">
-                                                                                        {timelineStages.map((stage, idx) => {
-                                                                                            const isLast = idx === timelineStages.length - 1;
-                                                                                            const isStepCompleted = stage.id < currentStageId;
-                                                                                            const isCurrent = stage.id === currentStageId;
-                                                                                            const stageDate = tracker.history[stage.id]?.date || '-';
-                                                                                            const stageTime = tracker.history[stage.id]?.time || '-';
-
-                                                                                            return (
-                                                                                                <div key={stage.id} className="timeline-item">
-                                                                                                    <div className="timeline-date">
-                                                                                                        <div className="timeline-date-text">{stageDate}</div>
-                                                                                                    </div>
-
-                                                                                                    <div className="timeline-marker-container">
-                                                                                                        {!isLast && (
-                                                                                                            <div className={`timeline-line ${isStepCompleted ? 'completed' : 'pending'}`} />
-                                                                                                        )}
-                                                                                                        <div className={`timeline-dot ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
-                                                                                                            {isStepCompleted ? '✓' : stage.id}
-                                                                                                        </div>
-                                                                                                    </div>
-
-                                                                                                    <div className={`timeline-content ${isLast ? '' : 'not-last'}`}>
-                                                                                                        <div className="timeline-header">
-                                                                                                            <div className={`timeline-label ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
-                                                                                                                {stage.label}
-                                                                                                            </div>
-
-                                                                                                            {isCurrent && (
-                                                                                                                <button
-                                                                                                                    className="timeline-update-btn"
-                                                                                                                    onClick={() => handleStageUpdateLocal(unit.id, buffaloNum, stage.id + 1)}
-                                                                                                                >
-                                                                                                                    {stage.id === 8 ? 'Confirm Delivery' : 'Update'}
-                                                                                                                </button>
-                                                                                                            )}
-
-                                                                                                            {isStepCompleted && (
-                                                                                                                <span className="timeline-completed-badge">
-                                                                                                                    {stage.id === 8 ? 'Delivered' : 'Completed'}
-                                                                                                                </span>
-                                                                                                            )}
-                                                                                                        </div>
-                                                                                                        <div className="timeline-time">
-                                                                                                            {stageTime !== '-' ? stageTime : ''}
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                            );
-                                                                                        })}
-                                                                                    </div>
-                                                                                </div>
-                                                                            );
-                                                                        })}
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="no-tracking-placeholder">
-                                                                        Select a unit to see tracking progress
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
                                     </React.Fragment>
                                 );
                             })
