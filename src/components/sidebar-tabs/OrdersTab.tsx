@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import { CheckCircle, CheckSquare, XCircle, Clock, ClipboardList, Copy, Check } from 'lucide-react';
@@ -13,7 +14,8 @@ import {
     setActiveUnitIndex,
     setShowFullDetails,
     updateTrackingData,
-    setInitialTracking
+    setInitialTracking,
+    fetchStatusCounts
 } from '../../store/slices/ordersSlice';
 import { setProofModal } from '../../store/slices/uiSlice';
 import Loader from '../common/Loader';
@@ -90,8 +92,41 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
     const adminMobile = useAppSelector((state: RootState) => state.auth.adminMobile || '9999999999');
 
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // Sync URL Filters to Redux State
+    useEffect(() => {
+        const pageParam = searchParams.get('page');
+        const statusParam = searchParams.get('status');
+        const paymentParam = searchParams.get('payment');
+        const modeParam = searchParams.get('mode');
+
+        // Page
+        const pageNum = pageParam ? parseInt(pageParam, 10) : 1;
+        if (!isNaN(pageNum) && pageNum !== page) {
+            dispatch(setPage(pageNum));
+        }
+
+        // Status
+        if (statusParam && statusParam !== statusFilter) {
+            dispatch(setStatusFilter(statusParam));
+        }
+
+        // Payment Type
+        if (paymentParam && paymentParam !== paymentTypeFilter) {
+            dispatch(setPaymentFilter(paymentParam));
+        }
+
+        // Transfer Mode
+        if (modeParam && modeParam !== transferModeFilter) {
+            dispatch(setTransferModeFilter(modeParam));
+        }
+
+    }, [searchParams, dispatch, page, statusFilter, paymentTypeFilter, transferModeFilter]);
+
     // Debounce Search
     const [localSearch, setLocalSearch] = useState(searchQuery);
+    const [expandedTrackerKeys, setExpandedTrackerKeys] = useState<Record<string, boolean>>({}); // NEW: Local state for individual expand/collapse
 
     useEffect(() => {
         setLocalSearch(searchQuery);
@@ -139,10 +174,47 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
             prev.paymentTypeFilter !== current.paymentTypeFilter ||
             prev.transferModeFilter !== current.transferModeFilter
         ) {
-            dispatch(setPage(1));
+            // dispatch(setPage(1)); // Handled via URL update now to keep sync
+            setSearchParams(prevParams => {
+                const newParams = new URLSearchParams(prevParams);
+                newParams.set('page', '1');
+                return newParams;
+            });
             prevFiltersRef.current = current;
         }
-    }, [statusFilter, paymentTypeFilter, transferModeFilter, dispatch]);
+    }, [statusFilter, paymentTypeFilter, transferModeFilter, dispatch, setSearchParams]);
+
+    // Initial Stats Fetch
+    // Filter Change Handlers with URL updates
+    const handleStatusFilterChange = (status: string) => {
+        setSearchParams(prev => {
+            const newParams = new URLSearchParams(prev);
+            newParams.set('status', status); // Always set status explicitly
+            newParams.set('page', '1'); // Reset page on filter change
+            return newParams;
+        });
+        // Dispatch happens in useEffect
+    };
+
+    const handlePaymentTypeChange = (type: string) => {
+        setSearchParams(prev => {
+            const newParams = new URLSearchParams(prev);
+            if (type === 'All Payments') newParams.delete('payment');
+            else newParams.set('payment', type);
+            newParams.set('page', '1');
+            return newParams;
+        });
+    };
+
+    const handleTransferModeChange = (mode: string) => {
+        setSearchParams(prev => {
+            const newParams = new URLSearchParams(prev);
+            if (mode === 'All Modes') newParams.delete('mode');
+            else newParams.set('mode', mode);
+            newParams.set('page', '1');
+            return newParams;
+        });
+    };
 
 
     const handleViewProof = useCallback((transaction: any, investor: any) => {
@@ -254,7 +326,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
             <div className="status-controls">
                 <div
                     className={`stats-card ${statusFilter === 'All Status' ? 'active-all' : ''}`}
-                    onClick={() => dispatch(setStatusFilter('All Status'))}
+                    onClick={() => handleStatusFilterChange('All Status')}
                 >
                     <div className="card-icon-wrapper all">
                         <ClipboardList size={24} />
@@ -266,7 +338,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                 </div>
                 <div
                     className={`stats-card ${statusFilter === 'PENDING_ADMIN_VERIFICATION' ? 'active-pending' : ''}`}
-                    onClick={() => dispatch(setStatusFilter('PENDING_ADMIN_VERIFICATION'))}
+                    onClick={() => handleStatusFilterChange('PENDING_ADMIN_VERIFICATION')}
                 >
                     <div className="card-icon-wrapper pending">
                         <CheckCircle size={24} />
@@ -279,7 +351,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
                 <div
                     className={`stats-card ${statusFilter === 'PAID' ? 'active-paid' : ''}`}
-                    onClick={() => dispatch(setStatusFilter('PAID'))}
+                    onClick={() => handleStatusFilterChange('PAID')}
                 >
                     <div className="card-icon-wrapper approved">
                         <CheckSquare size={24} />
@@ -292,7 +364,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
                 <div
                     className={`stats-card ${statusFilter === 'REJECTED' ? 'active-rejected' : ''}`}
-                    onClick={() => dispatch(setStatusFilter('REJECTED'))}
+                    onClick={() => handleStatusFilterChange('REJECTED')}
                 >
                     <div className="card-icon-wrapper rejected">
                         <XCircle size={24} />
@@ -305,7 +377,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
                 <div
                     className={`stats-card ${statusFilter === 'PENDING_PAYMENT' ? 'active-payment-due' : ''}`}
-                    onClick={() => dispatch(setStatusFilter('PENDING_PAYMENT'))}
+                    onClick={() => handleStatusFilterChange('PENDING_PAYMENT')}
                 >
                     <div className="card-icon-wrapper payment-due">
                         <Clock size={24} />
@@ -340,7 +412,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                             <th style={{ minWidth: '140px' }}>
                                 <select
                                     value={paymentTypeFilter}
-                                    onChange={(e) => dispatch(setPaymentFilter(e.target.value))}
+                                    onChange={(e) => handlePaymentTypeChange(e.target.value)}
                                     style={{
                                         width: '100%',
                                         padding: '4px',
@@ -384,6 +456,8 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                 const inv = entry.investor || {};
                                 const serialNumber = (page - 1) * pageSize + index + 1;
 
+                                const isExpandable = unit.paymentStatus === 'PAID' || unit.paymentStatus === 'Approved';
+
                                 return (
                                     <React.Fragment key={`${unit.id || 'order'}-${index}`}>
                                         <tr>
@@ -419,8 +493,13 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                             <td>
                                                 <button
                                                     className="check-status-btn"
-                                                    onClick={() => handleToggleExpansion(unit.id)}
-                                                    style={{ fontWeight: 700 }}
+                                                    onClick={() => isExpandable && handleToggleExpansion(unit.id)}
+                                                    style={{
+                                                        fontWeight: 700,
+                                                        cursor: isExpandable ? 'pointer' : 'default',
+                                                        textDecoration: isExpandable ? 'underline' : 'none',
+                                                        color: isExpandable ? '#3b82f6' : '#374151'
+                                                    }}
                                                 >
                                                     {unit.id}
                                                 </button>
@@ -571,6 +650,16 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                                 const buffaloNum = idx + 1;
                                                                                 const tracker = trackingData[`${unit.id}-${buffaloNum}`] || getTrackingForBuffalo(unit.id, buffaloNum, unit.paymentStatus, unit.created_at || unit.createdAt);
                                                                                 const currentStageId = tracker.currentStageId;
+                                                                                const trackerKey = `${unit.id}-${buffaloNum}`;
+                                                                                // Default to expanded if not set, or handle logic
+                                                                                const isExpanded = expandedTrackerKeys[trackerKey] !== false; // Default true or false? Let's default true for Orders for better visibility? Or false to save space?
+                                                                                // TrackingTab defaults to false (undefined -> false).
+                                                                                // Let's match TrackingTab behavior: undefined -> false.
+                                                                                // Wait, let's check TrackingTab again: ` !!expandedTrackerKeys[trackerKey]` -> false by default.
+                                                                                // User said "all tabs... should be expand and minimize".
+                                                                                // If I default to false, they won't see it immediately.
+                                                                                // Let's default to TRUE for OrdersTab as it was visibly open before.
+                                                                                // Use: `expandedTrackerKeys[trackerKey] !== false` which means default is TRUE.
 
                                                                                 // For Cycle 2, hide stages 1, 2, 3
                                                                                 const timelineStages = buffaloNum === 2
@@ -581,60 +670,70 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                                                     <div key={buffaloNum} className="tracking-buffalo-card" style={{ marginBottom: '15px' }}>
                                                                                         <div className="tracking-buffalo-title">
                                                                                             <span>Cycle-{buffaloNum}</span>
+                                                                                            <button
+                                                                                                onClick={() => setExpandedTrackerKeys(prev => ({ ...prev, [trackerKey]: !isExpanded }))}
+                                                                                                className="tracking-individual-expand-btn"
+                                                                                                style={{ backgroundColor: 'white', border: 'none' }}
+                                                                                            >
+                                                                                                {isExpanded ? 'Minimize' : 'Expand'}
+                                                                                                <span className={`tracking-chevron ${isExpanded ? 'up' : 'down'}`}>
+                                                                                                    {isExpanded ? '▲' : '▼'}
+                                                                                                </span>
+                                                                                            </button>
                                                                                         </div>
 
-                                                                                        <div className="tracking-timeline-container order-expand-animation" style={{ padding: '15px' }}>
-                                                                                            {timelineStages.map((stage, sIdx) => {
-                                                                                                const isLast = sIdx === timelineStages.length - 1;
-                                                                                                const isStepCompleted = stage.id < currentStageId;
-                                                                                                const isCurrent = stage.id === currentStageId;
-                                                                                                const stageDate = tracker.history[stage.id]?.date || '-';
-                                                                                                const stageTime = tracker.history[stage.id]?.time || '-';
+                                                                                        {isExpanded && (
+                                                                                            <div className="tracking-timeline-container order-expand-animation" style={{ padding: '15px' }}>
+                                                                                                {timelineStages.map((stage, sIdx) => {
+                                                                                                    const isLast = sIdx === timelineStages.length - 1;
+                                                                                                    const isStepCompleted = stage.id < currentStageId;
+                                                                                                    const isCurrent = stage.id === currentStageId;
+                                                                                                    const stageDate = tracker.history[stage.id]?.date || '-';
+                                                                                                    const stageTime = tracker.history[stage.id]?.time || '-';
 
-                                                                                                return (
-                                                                                                    <div key={stage.id} className="tracking-timeline-item">
-                                                                                                        <div className="tracking-timeline-date-col">
-                                                                                                            <div className="tracking-timeline-date">{stageDate}</div>
-                                                                                                        </div>
-
-                                                                                                        <div className="tracking-timeline-marker-col">
-                                                                                                            {!isLast && (
-                                                                                                                <div className={`tracking-timeline-line ${isStepCompleted ? 'completed' : 'pending'}`} />
-                                                                                                            )}
-                                                                                                            <div className={`tracking-timeline-dot ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
-                                                                                                                {isStepCompleted ? '✓' : stage.id}
+                                                                                                    return (
+                                                                                                        <div key={stage.id} className="tracking-timeline-item">
+                                                                                                            <div className="tracking-timeline-date-col">
+                                                                                                                <div className="tracking-timeline-date">{stageDate}</div>
+                                                                                                                {stageTime !== '-' && <div className="tracking-timeline-time-sub">{stageTime}</div>}
                                                                                                             </div>
-                                                                                                        </div>
 
-                                                                                                        <div className={`tracking-timeline-content-col ${isLast ? 'last' : ''}`}>
-                                                                                                            <div className="tracking-timeline-header">
-                                                                                                                <div className={`tracking-timeline-label ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
-                                                                                                                    {stage.label}
+                                                                                                            <div className="tracking-timeline-marker-col">
+                                                                                                                {!isLast && (
+                                                                                                                    <div className={`tracking-timeline-line ${isStepCompleted ? 'completed' : 'pending'}`} />
+                                                                                                                )}
+                                                                                                                <div className={`tracking-timeline-dot ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
+                                                                                                                    {isStepCompleted ? '✓' : stage.id}
                                                                                                                 </div>
-
-                                                                                                                {isCurrent && (
-                                                                                                                    <button
-                                                                                                                        className="tracking-update-btn"
-                                                                                                                        onClick={() => handleStageUpdateLocal(unit.id, buffaloNum, stage.id + 1, tracker)}
-                                                                                                                    >
-                                                                                                                        {stage.id === 8 ? 'Confirm Delivery' : 'Update'}
-                                                                                                                    </button>
-                                                                                                                )}
-
-                                                                                                                {isStepCompleted && (
-                                                                                                                    <span className="tracking-completed-badge">
-                                                                                                                        {stage.id === 8 ? 'Delivered' : 'Completed'}
-                                                                                                                    </span>
-                                                                                                                )}
                                                                                                             </div>
-                                                                                                            <div className="tracking-timeline-time">
-                                                                                                                {stageTime !== '-' ? stageTime : ''}
+
+                                                                                                            <div className={`tracking-timeline-content-col ${isLast ? 'last' : ''}`}>
+                                                                                                                <div className="tracking-timeline-header">
+                                                                                                                    <div className={`tracking-timeline-label ${isStepCompleted ? 'completed' : isCurrent ? 'current' : 'pending'}`}>
+                                                                                                                        {stage.label}
+                                                                                                                    </div>
+
+                                                                                                                    {isCurrent && (
+                                                                                                                        <button
+                                                                                                                            className="tracking-update-btn"
+                                                                                                                            onClick={() => handleStageUpdateLocal(unit.id, buffaloNum, stage.id + 1, tracker)}
+                                                                                                                        >
+                                                                                                                            {stage.id === 8 ? 'Confirm Delivery' : 'Update'}
+                                                                                                                        </button>
+                                                                                                                    )}
+
+                                                                                                                    {isStepCompleted && (
+                                                                                                                        <span className="tracking-completed-badge">
+                                                                                                                            {stage.id === 8 ? 'Delivered' : 'Completed'}
+                                                                                                                        </span>
+                                                                                                                    )}
+                                                                                                                </div>
                                                                                                             </div>
                                                                                                         </div>
-                                                                                                    </div>
-                                                                                                );
-                                                                                            })}
-                                                                                        </div>
+                                                                                                    );
+                                                                                                })}
+                                                                                            </div>
+                                                                                        )}
                                                                                     </div>
                                                                                 );
                                                                             });
@@ -663,7 +762,13 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
             <Pagination
                 currentPage={page}
                 totalPages={totalPages || 1}
-                onPageChange={(p) => dispatch(setPage(p))}
+                onPageChange={(p) => {
+                    setSearchParams(prevParams => {
+                        const newParams = new URLSearchParams(prevParams);
+                        newParams.set('page', String(p));
+                        return newParams;
+                    });
+                }}
             />
         </div>
     );

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { usePersistentPagination, usePersistentState } from '../../hooks/usePersistence';
+import { useSearchParams } from 'react-router-dom';
+import { usePersistentState } from '../../hooks/usePersistence';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import {
@@ -20,9 +21,20 @@ const TrackingTab: React.FC = () => {
     const { pendingUnits, trackingData, expansion, loading: ordersLoading } = useAppSelector((state: RootState) => state.orders);
     const { expandedOrderId, activeUnitIndex, showFullDetails } = expansion;
 
+    // URL Search Params for Pagination
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentPage = parseInt(searchParams.get('page') || '1', 10);
+
+    const setCurrentPage = (page: number) => {
+        setSearchParams(prev => {
+            const newParams = new URLSearchParams(prev);
+            newParams.set('page', String(page));
+            return newParams;
+        });
+    };
+
     // Persist search query
     const [searchQuery, setSearchQuery] = usePersistentState('tracking_searchQuery', '');
-    const [currentPage, setCurrentPage] = usePersistentPagination('tracking_currentPage', 1);
 
     // Local expansion state for timeline accordions (visual only, not critical to persist globally unless desired)
     const [expandedTrackerKeys, setExpandedTrackerKeys] = useState<Record<string, boolean>>({});
@@ -355,6 +367,7 @@ const TrackingTab: React.FC = () => {
                                                                                                             <div key={stage.id} className="tracking-timeline-item">
                                                                                                                 <div className="tracking-timeline-date-col">
                                                                                                                     <div className="tracking-timeline-date">{stageDate}</div>
+                                                                                                                    {stageTime !== '-' && <div className="tracking-timeline-time-sub">{stageTime}</div>}
                                                                                                                 </div>
 
                                                                                                                 <div className="tracking-timeline-marker-col">
@@ -386,9 +399,6 @@ const TrackingTab: React.FC = () => {
                                                                                                                                 {stage.id === 8 ? 'Delivered' : 'Completed'}
                                                                                                                             </span>
                                                                                                                         )}
-                                                                                                                    </div>
-                                                                                                                    <div className="tracking-timeline-time">
-                                                                                                                        {stageTime !== '-' ? stageTime : ''}
                                                                                                                     </div>
                                                                                                                 </div>
                                                                                                             </div>

@@ -160,42 +160,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="relative z-20 w-full max-w-md bg-[#0F0F0F] rounded-2xl border border-gray-800 shadow-2xl p-8 backdrop-blur-sm">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <div className="flex justify-center">
-            <svg width="300" height="80" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg" className="h-20">
-              <text
-                x="50%"
-                y="50%"
-                textAnchor="end"
-                dx="-5"
-                dy="10"
-                fontSize="48"
-                fontFamily="Inter, sans-serif"
-                fontWeight="700"
-                fill="#FFFFFF"
-              >
-                mark
-              </text>
-              <text
-                x="50%"
-                y="50%"
-                textAnchor="start"
-                dx="5"
-                dy="10"
-                fontSize="48"
-                fontFamily="Inter, sans-serif"
-                fontWeight="700"
-                fill="#38BDF8"
-              >
-                wave
-              </text>
-              <path
-                d="M160 60 Q210 45 240 60"
-                fill="none"
-                stroke="#38BDF8"
-                strokeWidth="4"
-                strokeLinecap="round"
-              />
-            </svg>
+          <div className="flex justify-start" style={{ paddingLeft: '25px' }}>
+            <img
+              src="/login-logo.png"
+              alt="Markwave Logo"
+              style={{ height: '50px', filter: 'brightness(0) invert(1)' }}
+            />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
         </div>

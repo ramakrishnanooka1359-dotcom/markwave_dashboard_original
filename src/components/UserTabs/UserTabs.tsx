@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import './UserTabs.css';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
-import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, MapPin, Calculator, MonitorPlay } from 'lucide-react';
+import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, MapPin, Calculator, MonitorPlay, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
+import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import {
   setActiveTab,
   toggleSidebar,
@@ -67,17 +68,30 @@ interface UserTabsProps {
 
 const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, lastLogin, presentLogin, onLogout }) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Local State for Admin Name (dynamic fetch)
   const [displayAdminName, setDisplayAdminName] = useState(adminName);
 
   // UI State from Redux
-  const { isSidebarOpen, activeTab } = useAppSelector((state: RootState) => state.ui);
+  const { isSidebarOpen } = useAppSelector((state: RootState) => state.ui);
   const { referral: showModal, editReferral: { isOpen: showEditModal, user: editingUser } } = useAppSelector((state: RootState) => state.ui.modals);
 
   // Business Logic State from Redux
   const { referralUsers, existingCustomers } = useAppSelector((state: RootState) => state.users);
   const trackingData = useAppSelector((state: RootState) => state.orders.trackingData);
+
+  // Determine active tab for Sidebar highlighting based on path
+  const currentPath = location.pathname;
+  let activeTab = 'orders';
+  if (currentPath.includes('/tracking')) activeTab = 'tracking';
+  else if (currentPath.includes('/referrals')) activeTab = 'nonVerified';
+  else if (currentPath.includes('/investors')) activeTab = 'existing';
+  else if (currentPath.includes('/products')) activeTab = 'products';
+  else if (currentPath.includes('/buffalo-viz')) activeTab = 'buffaloViz';
+  else if (currentPath.includes('/emi-calculator')) activeTab = 'emi';
+  else if (currentPath.includes('/orders')) activeTab = 'orders';
 
   const [formData, setFormData] = useState({
     mobile: '',
@@ -138,30 +152,24 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     }
   }, [adminMobile]);
 
+  // Fetch data based on active route
+  useEffect(() => {
+    if (location.pathname.includes('/tracking')) {
+      dispatch(fetchPendingUnits({ adminMobile, paymentStatus: 'PAID', pageSize: 100 }));
+    } else if (location.pathname.includes('/referrals')) {
+      dispatch(fetchReferralUsers());
+    } else if (location.pathname.includes('/investors')) {
+      dispatch(fetchExistingCustomers());
+      dispatch(fetchReferralUsers());
+    } else if (location.pathname.includes('/products')) {
+      dispatch(fetchProducts());
+    }
+  }, [location.pathname, dispatch, adminMobile]);
+
   const getSortIcon = (key: string, currentSortConfig: any) => {
     if (currentSortConfig.key !== key) return '';
     return currentSortConfig.direction === 'asc' ? '↑' : '↓';
   };
-
-
-  useEffect(() => {
-    // Save active tab to persist across reloads
-    localStorage.setItem('activeTab', activeTab);
-
-    // Only fetch data for the user-related tabs.
-    if (activeTab === 'orders') {
-      dispatch(fetchPendingUnits({ adminMobile }));
-    } else if (activeTab === 'tracking') {
-      dispatch(fetchPendingUnits({ adminMobile, paymentStatus: 'PAID', pageSize: 100 }));
-    } else if (activeTab === 'nonVerified') {
-      dispatch(fetchReferralUsers());
-    } else if (activeTab === 'existing') {
-      dispatch(fetchExistingCustomers());
-      dispatch(fetchReferralUsers());
-    } else if (activeTab === 'products') {
-      dispatch(fetchProducts());
-    }
-  }, [activeTab, dispatch, adminMobile]);
 
   const handleApproveClick = async (unitId: string) => {
     try {
@@ -357,71 +365,6 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     dispatch(setProofModal({ isOpen: false }));
   };
 
-  /* --- Tab Content Switch --- */
-  const renderContentSwitch = () => {
-    return (
-      <>
-        {(() => {
-          switch (activeTab) {
-            case 'orders':
-              return (
-                <React.Suspense fallback={<OrdersPageSkeleton />}>
-                  <OrdersTab
-                    handleApproveClick={handleApproveClick}
-                    handleReject={handleReject}
-                  />
-                </React.Suspense>
-              );
-            case 'tracking':
-              return (
-                <React.Suspense fallback={<TrackingPageSkeleton />}>
-                  <TrackingTab />
-                </React.Suspense>
-              );
-            case 'nonVerified':
-              return (
-                <React.Suspense fallback={<UsersPageSkeleton />}>
-                  <NonVerifiedUsersTab getSortIcon={getSortIcon} />
-                </React.Suspense>
-              );
-            case 'existing':
-              return (
-                <React.Suspense fallback={<UsersPageSkeleton />}>
-                  <ExistingCustomersTab getSortIcon={getSortIcon} />
-                </React.Suspense>
-              );
-            // case 'tree':
-            //   return <BuffaloTreeTab />;
-            case 'products':
-              return (
-                <React.Suspense fallback={<ProductsPageSkeleton />}>
-                  <ProductsTab />
-                </React.Suspense>
-              );
-            case 'buffaloViz':
-              return (
-                <React.Suspense fallback={<BuffaloVizSkeleton />}>
-                  <BuffaloVisualizationTab />
-                </React.Suspense>
-              );
-            case 'emi':
-              return (
-                <React.Suspense fallback={<EmiCalculatorSkeleton />}>
-                  <EmiCalculatorTab />
-                </React.Suspense>
-              );
-            default:
-              return (
-                <React.Suspense fallback={<OrdersPageSkeleton />}>
-                  <OrdersTab handleApproveClick={handleApproveClick} handleReject={handleReject} />
-                </React.Suspense>
-              );
-          }
-        })()}
-      </>
-    );
-  };
-
   return (
     <div className="app-container">
       {/* Mobile Sidebar Overlay */}
@@ -433,50 +376,32 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
       {/* Global Header - Top Full Width */}
       <header style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Left: Mobile Toggle, Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           <button
-            className="mobile-menu-toggle"
+            className="sidebar-toggle-btn"
             onClick={() => dispatch(toggleSidebar())}
             style={{
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               color: 'white',
-              display: 'none', // Controlled by CSS
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              padding: '12px 16px',
+              height: 'auto',
+              width: 'auto',
+              filter: 'drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25))'
             }}
           >
             {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
 
-          <svg width="240" height="60" viewBox="0 0 240 60" xmlns="http://www.w3.org/2000/svg" style={{ height: '45px', marginLeft: '0px' }}>
-            <text
-              x="-40"
-              y="38"
-              fontSize="32"
-              fontFamily="Inter, sans-serif"
-              fontWeight="600"
-              fill="#FFFFFF"
-            >
-              mark
-            </text>
-            <text
-              x="45"
-              y="38"
-              fontSize="32"
-              fontFamily="Inter, sans-serif"
-              fontWeight="600"
-              fill="#38BDF8"
-            >
-              wave
-            </text>
-            <path
-              d="M60 45 C105 35, 120 35, 135 45"
-              fill="none"
-              stroke="#38BDF8"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-          </svg>
+          <img
+            src="/header-logo-new.png"
+            alt="Markwave Logo"
+            style={{ height: '30px', marginLeft: '0px', filter: 'brightness(0) invert(1)' }}
+          />
         </div>
 
         {/* Center: Title */}
@@ -516,14 +441,17 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
           className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}
           onClick={() => dispatch(toggleSidebar())}
         >
-          <ul className="sidebar-menu" style={{ marginTop: '20px' }}>
-            {/* Orders */}
+          <ul className="sidebar-menu" style={{ marginTop: '10px' }}>
+            {/* Sidebar Toggle Button at the top */}
+
+
+            {/* Dashboard (Orders) */}
             <li>
               <button
                 className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  dispatch(setActiveTab('orders'));
+                  navigate('/dashboard/orders');
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -539,7 +467,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 className={`nav-item ${activeTab === 'tracking' ? 'active' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  dispatch(setActiveTab('tracking'));
+                  navigate('/dashboard/tracking');
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -555,7 +483,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 className={`nav-item ${activeTab === 'nonVerified' ? 'active' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  dispatch(setActiveTab('nonVerified'));
+                  navigate('/dashboard/referrals');
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -571,7 +499,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 className={`nav-item ${activeTab === 'existing' ? 'active' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  dispatch(setActiveTab('existing'));
+                  navigate('/dashboard/investors');
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -589,7 +517,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 className={`nav-item ${activeTab === 'tree' ? 'active-main' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  dispatch(setActiveTab('tree'));
+                  // dispatch(setActiveTab('tree'));
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -605,7 +533,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 className={`nav-item ${activeTab === 'products' ? 'active-main' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  dispatch(setActiveTab('products'));
+                  navigate('/dashboard/products');
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -621,7 +549,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 className={`nav-item ${activeTab === 'buffaloViz' ? 'active-main' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  dispatch(setActiveTab('buffaloViz'));
+                  navigate('/dashboard/buffalo-viz');
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -637,7 +565,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 className={`nav-item ${activeTab === 'emi' ? 'active-main' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  dispatch(setActiveTab('emi'));
+                  navigate('/dashboard/emi-calculator');
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -666,7 +594,51 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
         {/* Main Content Area */}
         <main className="main-content">
-          {renderContentSwitch()}
+          <Routes>
+            <Route path="orders" element={
+              <React.Suspense fallback={<OrdersPageSkeleton />}>
+                <OrdersTab
+                  handleApproveClick={handleApproveClick}
+                  handleReject={handleReject}
+                />
+              </React.Suspense>
+            } />
+            <Route path="tracking" element={
+              <React.Suspense fallback={<TrackingPageSkeleton />}>
+                <TrackingTab />
+              </React.Suspense>
+            } />
+            <Route path="referrals" element={
+              <React.Suspense fallback={<UsersPageSkeleton />}>
+                <NonVerifiedUsersTab getSortIcon={getSortIcon} />
+              </React.Suspense>
+            } />
+            <Route path="investors" element={
+              <React.Suspense fallback={<UsersPageSkeleton />}>
+                <ExistingCustomersTab getSortIcon={getSortIcon} />
+              </React.Suspense>
+            } />
+            <Route path="products" element={
+              <React.Suspense fallback={<ProductsPageSkeleton />}>
+                <ProductsTab />
+              </React.Suspense>
+            } />
+            <Route path="buffalo-viz" element={
+              <React.Suspense fallback={<BuffaloVizSkeleton />}>
+                <BuffaloVisualizationTab />
+              </React.Suspense>
+            } />
+            <Route path="emi-calculator" element={
+              <React.Suspense fallback={<EmiCalculatorSkeleton />}>
+                <EmiCalculatorTab />
+              </React.Suspense>
+            } />
+
+            {/* Default redirect to orders if just /dashboard is accessed */}
+            <Route path="/" element={<Navigate to="orders" replace />} />
+            {/* Catch all to orders or 404 */}
+            <Route path="*" element={<Navigate to="orders" replace />} />
+          </Routes>
 
           {/* Floating + Icon at bottom left - only show on Referral tab */}
           {activeTab === 'nonVerified' && (

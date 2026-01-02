@@ -1,3 +1,4 @@
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch } from './store/hooks';
 import { setSession as setReduxSession } from './store/slices/authSlice';
 import React, { useState, useCallback, useEffect } from 'react';
@@ -14,28 +15,35 @@ interface Session {
 }
 
 
-function App() {
-  const [session, setSession] = useState<Session | null>(null);
-  const dispatch = useAppDispatch();
 
-  useEffect(() => {
+
+function App() {
+  const [session, setSession] = useState<Session | null>(() => {
     const saved = window.localStorage.getItem('ak_dashboard_session');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        setSession(parsed);
-        dispatch(setReduxSession({
-          adminMobile: parsed.mobile,
-          adminName: parsed.name || 'Admin',
-          adminRole: parsed.role || 'Admin',
-          lastLogin: parsed.lastLoginTime || 'First Login',
-          presentLogin: parsed.currentLoginTime || new Date().toLocaleString(),
-        }));
+        return JSON.parse(saved);
       } catch (e) {
         window.localStorage.removeItem('ak_dashboard_session');
       }
     }
-  }, [dispatch]);
+    return null;
+  });
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (session) {
+      dispatch(setReduxSession({
+        adminMobile: session.mobile,
+        adminName: session.name || 'Admin',
+        adminRole: session.role || 'Admin',
+        lastLogin: session.lastLoginTime || 'First Login',
+        presentLogin: session.currentLoginTime || new Date().toLocaleString(),
+      }));
+    }
+  }, [dispatch, session]);
 
   const handleLogin = useCallback((s: Session) => {
     // Determine last login (from previous session or current if new)
@@ -66,7 +74,11 @@ function App() {
       lastLogin: newSession.lastLoginTime || 'First Login',
       presentLogin: newSession.currentLoginTime || new Date().toLocaleString(),
     }));
-  }, [dispatch]);
+
+    // Navigate to origin
+    const from = (location.state as any)?.from?.pathname || '/dashboard/orders';
+    navigate(from, { replace: true });
+  }, [dispatch, location.state, navigate]);
 
   const handleLogout = () => {
     window.localStorage.removeItem('ak_dashboard_session');
@@ -77,29 +89,35 @@ function App() {
 
   return (
     <div className="App">
-      {/* Global Header Removed for Soft UI Theme - Moved to UserTabs */}
+      <Routes>
+        <Route path="/login" element={
+          session ? <Navigate to="/dashboard/orders" replace /> : <Login onLogin={handleLogin} />
+        } />
 
-      {!session && (
-        <Login onLogin={handleLogin} />
-      )}
+        <Route path="/dashboard/*" element={
+          !session ? (
+            <Navigate to="/login" replace state={{ from: location }} />
+          ) : !isAdmin ? (
+            <div style={{ maxWidth: 600, margin: '2rem auto', padding: '1.5rem', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', textAlign: 'center' }}>
+              <h2 style={{ marginBottom: '0.75rem' }}>Access Restricted</h2>
+              <p style={{ marginBottom: 0 }}>Only Admin users can access this dashboard. Please login with an Admin mobile.</p>
+              <button onClick={handleLogout} style={{ marginTop: '1rem', padding: '8px 16px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Logout</button>
+            </div>
+          ) : (
+            <UserTabs
+              adminMobile={session.mobile}
+              adminName={session.name || 'Admin'}
+              adminRole={session.role || 'Admin'}
+              lastLogin={session.lastLoginTime || 'First Login'}
+              presentLogin={session.currentLoginTime || new Date().toLocaleString()}
+              onLogout={handleLogout}
+            />
+          )
+        } />
 
-      {session && !isAdmin && (
-        <div style={{ maxWidth: 600, margin: '2rem auto', padding: '1.5rem', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', textAlign: 'center' }}>
-          <h2 style={{ marginBottom: '0.75rem' }}>Access Restricted</h2>
-          <p style={{ marginBottom: 0 }}>Only Admin users can access this dashboard. Please login with an Admin mobile.</p>
-        </div>
-      )}
-
-      {session && isAdmin && (
-        <UserTabs
-          adminMobile={session.mobile}
-          adminName={session.name || 'Admin'}
-          adminRole={session.role || 'Admin'}
-          lastLogin={session.lastLoginTime || 'First Login'}
-          presentLogin={session.currentLoginTime || new Date().toLocaleString()}
-          onLogout={handleLogout}
-        />
-      )}
+        {/* Redirect root to dashboard */}
+        <Route path="*" element={<Navigate to="/dashboard/orders" replace />} />
+      </Routes>
     </div>
   );
 }

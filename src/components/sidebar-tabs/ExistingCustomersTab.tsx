@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { usePersistentState, usePersistentPagination } from '../../hooks/usePersistence';
+import { useSearchParams } from 'react-router-dom';
+import { usePersistentState } from '../../hooks/usePersistence';
 import { useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import { useTableSortAndSearch } from '../../hooks/useTableSortAndSearch';
@@ -17,9 +18,20 @@ const ExistingCustomersTab: React.FC<ExistingCustomersTabProps> = ({
 }) => {
     const { existingCustomers, referralUsers, loading: usersLoading } = useAppSelector((state: RootState) => state.users);
 
+    // URL Search Params for Pagination
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentPage = parseInt(searchParams.get('page') || '1', 10);
+
+    const setCurrentPage = (page: number) => {
+        setSearchParams(prev => {
+            const newParams = new URLSearchParams(prev);
+            newParams.set('page', String(page));
+            return newParams;
+        });
+    };
+
     // Use persistent state
     const [activeSubTab, setActiveSubTab] = usePersistentState<'verified' | 'non-verified'>('existing_activeSubTab', 'verified');
-    const [currentPage, setCurrentPage] = usePersistentPagination('existing_currentPage', 1);
     const itemsPerPage = 15;
 
     // Combine and deduplicate users (only Investors for this tab)
@@ -96,6 +108,7 @@ const ExistingCustomersTab: React.FC<ExistingCustomersTabProps> = ({
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('first_name')}>First Name {getSortIcon('first_name', existingUsersSortConfig)}</th>
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('last_name')}>Last Name {getSortIcon('last_name', existingUsersSortConfig)}</th>
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('mobile')}>Mobile {getSortIcon('mobile', existingUsersSortConfig)}</th>
+                            <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('role')}>Role {getSortIcon('role', existingUsersSortConfig)}</th>
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('isFormFilled')}>Form Filled {getSortIcon('isFormFilled', existingUsersSortConfig)}</th>
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('refered_by_name')}>Referred By {getSortIcon('refered_by_name', existingUsersSortConfig)}</th>
                             <th className="existing-customers-th existing-customers-th-sortable" onClick={() => requestExistingUsersSort('refered_by_mobile')}>Referrer Mobile {getSortIcon('refered_by_mobile', existingUsersSortConfig)}</th>
@@ -107,7 +120,7 @@ const ExistingCustomersTab: React.FC<ExistingCustomersTabProps> = ({
                             <TableSkeleton cols={8} rows={10} />
                         ) : currentItems.length === 0 ? (
                             <tr>
-                                <td colSpan={8} className="existing-customers-no-data">No users found</td>
+                                <td colSpan={9} className="existing-customers-no-data">No users found</td>
                             </tr>
                         ) : (
                             currentItems.map((user: any, index: number) => (
@@ -116,6 +129,7 @@ const ExistingCustomersTab: React.FC<ExistingCustomersTabProps> = ({
                                     <td className="existing-customers-td">{user.first_name || '-'}</td>
                                     <td className="existing-customers-td">{user.last_name || '-'}</td>
                                     <td className="existing-customers-td">{user.mobile}</td>
+                                    <td className="existing-customers-td">{user.role || 'Investor'}</td>
                                     <td className="existing-customers-td">{user.isFormFilled ? 'Yes' : 'No'}</td>
                                     <td className="existing-customers-td">{user.refered_by_name || '-'}</td>
                                     <td className="existing-customers-td">{user.refered_by_mobile || '-'}</td>

@@ -96,6 +96,39 @@ export const rejectOrder = createAsyncThunk(
     }
 );
 
+export const fetchStatusCounts = createAsyncThunk(
+    'orders/fetchStatusCounts',
+    async ({ adminMobile }: { adminMobile: string }, { rejectWithValue }) => {
+        try {
+            const statuses = [
+                'All Status',
+                'PENDING_ADMIN_VERIFICATION',
+                'PAID',
+                'REJECTED',
+                'PENDING_PAYMENT'
+            ];
+
+            const requests = statuses.map(status => {
+                const params: any = { page: 1, page_size: 1 }; // Minimal fetch to get count
+                if (status !== 'All Status') params.paymentStatus = status;
+                return axios.get(API_ENDPOINTS.getPendingUnits(), {
+                    headers: { 'X-Admin-Mobile': adminMobile },
+                    params
+                }).then(res => ({
+                    status,
+                    count: res.data.total_filtered ?? (res.data.total_count || res.data.total || res.data.count || 0),
+                    totalAll: res.data.total_all_orders
+                }));
+            });
+
+            const results = await Promise.all(requests);
+            return results;
+        } catch (error: any) {
+            return rejectWithValue('Failed to fetch status counts');
+        }
+    }
+);
+
 export interface OrdersState {
     pendingUnits: any[];
     loading: boolean;
@@ -280,6 +313,20 @@ const ordersSlice = createSlice({
         });
         builder.addCase(rejectOrder.rejected, (state) => {
             state.actionLoading = false;
+        });
+
+        // Fetch Status Counts
+        builder.addCase(fetchStatusCounts.fulfilled, (state, action) => {
+            action.payload.forEach(({ status, count, totalAll }) => {
+                state.statusCounts[status] = count;
+                if (typeof totalAll === 'number') {
+                    state.totalAllOrders = totalAll;
+                }
+            });
+            // Explicitly ensure 'All Status' matches totalAllOrders if available
+            if (state.totalAllOrders > 0) {
+                state.statusCounts['All Status'] = state.totalAllOrders;
+            }
         });
     }
 });

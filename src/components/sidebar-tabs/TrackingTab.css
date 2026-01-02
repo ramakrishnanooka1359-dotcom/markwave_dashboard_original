@@ -260,16 +260,26 @@
 }
 
 .tracking-timeline-date-col {
-    width: 90px;
+    width: 100px;
     padding-right: 16px;
-    text-align: right;
+    text-align: center;
     padding-top: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .tracking-timeline-date {
     font-size: 12px;
     font-weight: 600;
     color: #64748b;
+}
+
+.tracking-timeline-time-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
 }
 
 .tracking-timeline-marker-col {
