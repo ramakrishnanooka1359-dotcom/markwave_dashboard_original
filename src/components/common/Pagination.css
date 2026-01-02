@@ -68,3 +68,30 @@
 .pagination-number.dots {
     cursor: default;
 }
+
+@media (max-width: 640px) {
+    .pagination-container {
+        padding: 0.75rem 0;
+        gap: 0.5rem;
+    }
+
+    .pagination-btn-text {
+        display: none;
+    }
+
+    .pagination-btn {
+        padding: 0.5rem;
+        min-width: 36px;
+        justify-content: center;
+    }
+
+    .pagination-numbers {
+        gap: 0.125rem;
+    }
+
+    .pagination-number {
+        min-width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+}

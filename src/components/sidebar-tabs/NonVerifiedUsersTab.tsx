@@ -65,9 +65,9 @@ const NonVerifiedUsersTab: React.FC<NonVerifiedUsersTabProps> = ({
 
     return (
         <div className="non-verified-users-container">
-            <div className="non-verified-users-header">
-                <h2 className="non-verified-users-title">Admin Referrals</h2>
-                <div className="admin-sub-tabs">
+            <div className="non-verified-users-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 px-2">
+                <h2 className="non-verified-users-title text-xl font-bold">Admin Referrals</h2>
+                <div className="admin-sub-tabs flex flex-nowrap gap-1 sm:gap-2 w-full sm:w-auto">
                     <button
                         className={`sub-tab-btn ${activeSubTab === 'verified' ? 'active' : ''}`}
                         onClick={() => setActiveSubTab('verified')}

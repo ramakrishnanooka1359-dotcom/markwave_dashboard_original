@@ -10,6 +10,18 @@
     align-items: center;
 }
 
+@media (max-width: 640px) {
+    .buffalo-tree-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .buffalo-tree-tab-container {
+        padding: 0.5rem;
+    }
+}
+
 .buffalo-tree-stat {
     font-size: 1rem;
     color: #374151;

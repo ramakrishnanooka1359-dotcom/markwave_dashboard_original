@@ -88,7 +88,7 @@ const ReferralModal: React.FC<ReferralModalProps> = ({
                             />
                         </div>
 
-                        <div className="form-row">
+                        <div className="flex flex-col sm:flex-row gap-4">
                             <div className="form-col">
                                 <label className="form-label">
                                     First Name

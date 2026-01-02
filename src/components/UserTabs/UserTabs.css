@@ -810,12 +810,6 @@
     .stats-grid {
       grid-template-columns: 1fr;
     }
-
-    .main-content {
-      /* padding: 1rem; */
-    }
-
-    /* Adjust Status Badge in header if needed */
   }
 
   @keyframes slideDownOrder {
@@ -908,5 +902,11 @@
   @keyframes spin {
     to {
       transform: rotate(360deg);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .main-content {
+      padding: 1rem 0.5rem !important;
     }
   }

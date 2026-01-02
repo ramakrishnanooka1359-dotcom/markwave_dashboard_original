@@ -306,18 +306,18 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
 
     return (
         <div className="orders-dashboard">
-            <div className="orders-header">
-                <h2>Live Orders</h2>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div className="orders-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                <h2 className="text-xl font-bold">Live Orders</h2>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <input
                         type="date"
-                        className="search-input"
+                        className="search-input w-full sm:w-auto"
                         style={{ maxWidth: '160px' }}
                     />
                     <input
                         type="text"
                         placeholder="Search by Order ID, Name, Mobile..."
-                        className="search-input orders-search"
+                        className="search-input orders-search w-full sm:w-auto"
                         value={localSearch}
                         onChange={(e) => setLocalSearch(e.target.value)}
                     />
@@ -325,7 +325,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
             </div>
 
             {/* Status Cards / Filters */}
-            <div className="status-controls">
+            <div className="status-controls grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
                 <div
                     className={`stats-card ${statusFilter === 'All Status' ? 'active-all' : ''}`}
                     onClick={() => handleStatusFilterChange('All Status')}
