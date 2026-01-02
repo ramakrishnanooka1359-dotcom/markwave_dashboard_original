@@ -54,11 +54,30 @@
     z-index: 100;
     color: var(--text-light);
     border-right: 1px solid rgba(255, 255, 255, 0.1);
+
+    /* Hide scrollbar while maintaining functionality */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+  }
+
+  .sidebar::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari and Opera */
   }
 
   .sidebar.closed {
     width: 60px;
     padding: 0;
+  }
+
+  .sidebar-header {
+    display: none;
+  }
+
+  .sidebar-close-btn-mobile {
+    display: none;
   }
 
   .sidebar.closed .nav-text,
@@ -280,18 +299,24 @@
   }
 
   /* Header Styles in Layout Body */
-  header {
+  .app-header {
     background: var(--header-bg);
     height: 70px;
-    padding: 0 32px 0 0;
+    padding: 0 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    z-index: 50;
+    z-index: 1000;
+    /* Ensure high enough */
     color: white;
     position: relative;
-    /* For absolute centering */
+  }
+
+  .header-logo {
+    height: 30px;
+    width: auto;
+    transition: all 0.3s ease;
   }
 
   /* Header Title Centering */
@@ -512,33 +537,7 @@
     position: relative;
   }
 
-  /* Admin Popover Specifics */
-  .admin-popover {
-    position: absolute;
-    bottom: 80px;
-    left: 70px;
-    width: 280px;
-    background: #fff !important;
-    border-radius: var(--border-radius-lg) !important;
-    box-shadow: 0 8px 26px -4px rgba(20, 20, 20, 0.15), 0 8px 9px -5px rgba(20, 20, 20, 0.06) !important;
-    border: none !important;
-  }
 
-  @media (max-width: 768px) {
-    .admin-popover {
-      position: fixed;
-      /* Center on screen for mobile */
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      /* Centering trick */
-      bottom: auto;
-      /* Reset bottom */
-      width: 90%;
-      /* Responsive width */
-      max-width: 320px;
-    }
-  }
 
 
   /* Table Container - Card Style */
@@ -740,35 +739,37 @@
     }
   }
 
-  /* Mobile Breakpoint */
+  /* Mobile Breakpoint (Drawer Navigation) */
   @media (max-width: 768px) {
     .app-container {
       flex-direction: column;
     }
 
+    .header-brand-text{
+      font-size: 1rem;
+    }
     .sidebar {
       position: fixed;
-      /* Changed to fixed to float over content properly on mobile */
-      top: 60px;
+      top: 0;
       bottom: 0;
-      /* Full height */
       left: 0;
-      z-index: 200;
-      /* Higher than header */
+      z-index: 2000;
       height: 100vh;
-      background: white;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      background: var(--sidebar-bg);
+      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
       transform: translateX(0);
-      width: 240px;
-      /* Standard mobile drawer width */
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 250px;
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
     }
 
     .sidebar.closed {
       transform: translateX(-100%);
-      width: 240px;
-      /* Keep width same, just hide */
-      padding: 1.5rem;
+      width: 250px;
+      padding: 0 !important;
+      /* Force zero padding to prevent vertical jump */
     }
 
     /* On mobile, when "closed", it means hidden. Reset the internal hiding logic used for desktop collapsed state */
@@ -781,7 +782,6 @@
 
     .sidebar.closed .nav-item {
       justify-content: flex-start;
-      /* Reset justification */
     }
 
     /* Hide the "closed" elements logic on mobile since we translate the whole bar */
@@ -790,25 +790,123 @@
     .sidebar.closed .user-info p,
     .sidebar.closed .user-profile {
       display: flex;
-      /* Or whatever original display was */
     }
 
-    /* Show overlay on mobile */
-    .sidebar-overlay {
-      display: block;
+    /* Adjust Header for Mobile */
+    .app-header {
+      padding: 0 16px;
+      /* Increased for better breathing room */
+      height: 60px;
     }
 
-    /* Hide sidebar logo/header on mobile (redundant with top bar) */
-    .sidebar-header {
+    /* Fix overlapping logo/toggle */
+    .header-logo {
       display: none !important;
     }
 
-    .sidebar-toggle-btn {
-      display: block !important;
+    .header-center-title {
+      display: flex !important;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.65rem;
+      /* Further reduced per user request */
+      font-weight: 700;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 10;
+      color: white;
     }
 
-    .stats-grid {
-      grid-template-columns: 1fr;
+    .sidebar-toggle-btn {
+      padding: 12px 8px !important;
+      /* 16px (header) + 8px = 24px offset */
+      z-index: 20;
+    }
+
+    .sidebar-menu {
+      padding: 0 16px;
+      /* Increased from 8px */
+    }
+
+    .nav-item {
+      padding: 10px 8px;
+      /* 16px (menu) + 8px = 24px offset */
+    }
+
+    .sidebar-header {
+      display: flex !important;
+      height: 60px;
+      /* Match app-header height */
+      flex-shrink: 0;
+      /* Prevent shrinking */
+      padding: 0 16px;
+      /* Match app-header padding */
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      justify-content: center;
+      align-items: center;
+      background: var(--header-bg);
+      margin-bottom: 0px;
+      /* Remove gap */
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .header-logo-sidebar {
+      height: 28px;
+      /* Increased for better scale */
+      width: auto;
+      filter: brightness(0) invert(1);
+      margin: 0 auto;
+    }
+
+    .sidebar-close-btn-mobile {
+      display: flex !important;
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 12px 8px;
+      opacity: 0.8;
+      position: absolute;
+      /* Lock to the left */
+      left: 16px;
+      /* 16px (sidebar-menu padding) + 8px (btn padding) = 24px */
+    }
+
+    .sidebar-close-btn-mobile:hover {
+      opacity: 1;
+    }
+
+    /* Simplify Header Right section */
+    .header-right {
+      gap: 10px;
+    }
+
+    /* Hide "Online" pill on mobile to save space */
+    .status-pill {
+      display: none !important;
+    }
+
+    /* Hide Admin name text, keep only avatar */
+    .admin-name-container {
+      display: none !important;
+    }
+
+    .admin-header-profile {
+      margin-left: 0;
+      gap: 0;
+    }
+
+    .admin-avatar-small {
+      width: 36px;
+      height: 36px;
+    }
+
+    /* Main Content adjustments */
+    .main-content {
+      padding: 0.75rem !important;
+      /* Maximizing screen space */
     }
   }
 
@@ -846,27 +944,6 @@
     border-radius: 20px;
   }
 
-  /* Admin Popover */
-  .admin-popover {
-    position: absolute;
-    top: 65px;
-    left: 20px;
-    bottom: auto;
-    width: 260px;
-    z-index: 2000;
-  }
-
-  @media (max-width: 768px) {
-    .admin-popover {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      bottom: auto;
-      width: 90%;
-      max-width: 320px;
-    }
-  }
 
   /* Health Status Styles */
   .health-status {

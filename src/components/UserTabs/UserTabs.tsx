@@ -371,7 +371,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
       />
 
       {/* Global Header - Top Full Width */}
-      <header style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <header className="app-header">
         {/* Left: Mobile Toggle, Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           <button
@@ -397,7 +397,8 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
           <img
             src="/header-logo-new.png"
             alt="Markwave Logo"
-            style={{ height: '30px', marginLeft: '0px', filter: 'brightness(0) invert(1)' }}
+            className="header-logo"
+            style={{ marginLeft: '0px', filter: 'brightness(0) invert(1)' }}
           />
         </div>
 
@@ -438,6 +439,23 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
           className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}
           onClick={() => dispatch(toggleSidebar())}
         >
+          <div className="sidebar-header">
+            <button
+              className="sidebar-close-btn-mobile"
+              onClick={(e) => {
+                e.stopPropagation();
+                dispatch(setSidebarOpen(false));
+              }}
+            >
+              <X size={20} />
+            </button>
+            <img
+              src="/header-logo-new.png"
+              alt="Markwave Logo"
+              className="header-logo-sidebar"
+              style={{ height: '28px', filter: 'brightness(0) invert(1)' }}
+            />
+          </div>
           <ul className="sidebar-menu" style={{ marginTop: '10px' }}>
             {/* Sidebar Toggle Button at the top */}
 
