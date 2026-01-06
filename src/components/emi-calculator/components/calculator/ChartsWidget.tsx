@@ -110,6 +110,18 @@ interface BarChartWidgetProps {
 }
 
 const BarChartWidget: React.FC<BarChartWidgetProps> = ({ months, emi, formatCurrency }) => {
+    const [barSize, setBarSize] = React.useState(32);
+
+    React.useEffect(() => {
+        const updateBarSize = () => {
+            setBarSize(window.innerWidth <= 320 ? 20 : 32);
+        };
+
+        updateBarSize();
+        window.addEventListener('resize', updateBarSize);
+        return () => window.removeEventListener('resize', updateBarSize);
+    }, []);
+
     const data = useMemo(() => {
         const years = Math.ceil(months / 12);
         const chartData = [];
@@ -160,7 +172,7 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({ months, emi, formatCurr
                         <Bar
                             dataKey="amount"
                             radius={[8, 8, 0, 0]}
-                            barSize={32}
+                            barSize={barSize}
                         >
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.fill} />

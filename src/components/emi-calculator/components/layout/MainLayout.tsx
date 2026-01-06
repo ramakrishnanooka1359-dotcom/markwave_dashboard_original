@@ -2,8 +2,8 @@ import React from 'react';
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
-            <div className="max-w-[1500px] mx-auto">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-4 lg:p-3 xl:p-8">
+            <div className="w-full max-w-full xl:max-w-[1400px] mx-auto">
                 <main>
                     {children}
                 </main>

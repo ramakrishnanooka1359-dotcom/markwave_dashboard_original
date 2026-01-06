@@ -732,10 +732,32 @@
     pointer-events: auto;
   }
 
-  /* Tablet Breakpoint */
+  /* Tablet Breakpoint (768px - 1024px) */
   @media (max-width: 1024px) {
     .stats-grid {
       grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* Laptop L and larger (1440px+) */
+  @media (min-width: 1441px) {
+    .stats-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .main-content {
+      padding: 2.5rem;
+    }
+  }
+
+  /* Mobile L (425px) */
+  @media (max-width: 425px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .header-brand-text {
+      font-size: 1rem;
     }
   }
 
@@ -745,9 +767,10 @@
       flex-direction: column;
     }
 
-    .header-brand-text{
+    .header-brand-text {
       font-size: 1rem;
     }
+
     .sidebar {
       position: fixed;
       top: 0;
@@ -907,6 +930,27 @@
     .main-content {
       padding: 0.75rem !important;
       /* Maximizing screen space */
+    }
+
+    .sidebar-overlay {
+      display: block;
+      /* Ensure overlay exists in DOM so opacity transition works */
+    }
+  }
+
+  /* Mobile S (320px) specific adjustments */
+  @media (max-width: 320px) {
+    .header-brand-text {
+      font-size: 0.85rem;
+    }
+
+    .nav-text {
+      font-size: 0.85rem;
+    }
+
+    .sidebar {
+      width: 240px;
+      /* Slightly smaller sidebar for very small screens */
     }
   }
 

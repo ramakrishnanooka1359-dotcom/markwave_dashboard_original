@@ -67,10 +67,10 @@ const HoverGradientStatCard: React.FC<HoverGradientStatCardProps> = ({
 
                     {/* Top Right: Data Stack */}
                     <div className="flex flex-col items-end text-right">
-                        <p className="text-[13px] font-bold text-gray-500 uppercase tracking-widest mb-1 leading-none">
+                        <p className="text-xs sm:text-[13px] font-bold text-gray-500 uppercase tracking-widest mb-1 leading-none">
                             {label}
                         </p>
-                        <div className={clsx("font-black text-3xl", theme.text)}>
+                        <div className={clsx("font-black text-xl sm:text-3xl", theme.text)}>
                             {prefix}{typeof value === 'number' && formatCurrency ? formatCurrency(value) : value}
                         </div>
                     </div>
@@ -80,11 +80,11 @@ const HoverGradientStatCard: React.FC<HoverGradientStatCardProps> = ({
                 {secondaryText && (
                     <div className="flex justify-between items-baseline mt-4 w-full">
                         <div className="w-24 flex justify-start pl-2">
-                            <span className="text-[12px] font-black text-gray-900 leading-tight">
+                            <span className="text-[10px] sm:text-[12px] font-black text-gray-900 leading-tight">
                                 Rate of<br />Investment
                             </span>
                         </div>
-                        <span className={clsx("text-2xl font-black", theme.text)}>
+                        <span className={clsx("text-lg sm:text-2xl font-black", theme.text)}>
                             ~ {secondaryText}
                         </span>
                     </div>
@@ -115,7 +115,7 @@ const HoverGradientStatCard: React.FC<HoverGradientStatCardProps> = ({
                     {label}
                 </p>
                 <div className="flex items-baseline">
-                    <span className={clsx("font-black text-2xl", theme.text)}>
+                    <span className={clsx("font-black text-lg sm:text-2xl", theme.text)}>
                         {prefix}{typeof value === 'number' && formatCurrency ? formatCurrency(value) : value}
                     </span>
                 </div>
