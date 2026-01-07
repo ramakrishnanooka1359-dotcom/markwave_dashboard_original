@@ -22,7 +22,5 @@ export const API_ENDPOINTS = {
   getPendingUnits: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/pending`,
   approveUnit: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/approve`,
   rejectUnit: () => `${API_CONFIG.getBaseUrl()}/purchases/admin/units/reject`,
-  updateProduct: (id: string) => `${API_CONFIG.getBaseUrl()}/products/${id}`,
-  deleteProduct: (id: string) => `${API_CONFIG.getBaseUrl()}/products/${id}`,
   uploadProductImage: (id: string) => `${API_CONFIG.getBaseUrl()}/products/${id}/images`,
 };

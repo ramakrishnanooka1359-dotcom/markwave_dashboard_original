@@ -2,7 +2,7 @@
   "name": "markwave_dashboard",
   "version": "0.1.1",
   "private": true,
-  "homepage": "/markwave_dashboard",
+  "homepage": "/",
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
     "@testing-library/dom": "^10.4.1",

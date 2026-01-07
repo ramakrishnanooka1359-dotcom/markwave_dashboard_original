@@ -162,7 +162,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <div className="text-center mb-8">
           <div className="flex justify-start" style={{ paddingLeft: '25px' }}>
             <img
-              src="/markwave_dashboard/login-logo.png"
+              src="/login-logo.png"
               alt="Markwave Logo"
               style={{ height: '50px', filter: 'brightness(0) invert(1)' }}
             />

@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import type { RootState } from '../../store';
-import { deleteProduct, updateProduct, uploadProductImage } from '../../store/slices/productsSlice';
+import { deleteProduct } from '../../store/slices/productsSlice';
 import ProductImageCarousel from '../products/ProductImageCarousel';
-import Loader from '../common/Loader';
 import ProductCardSkeleton from '../common/ProductCardSkeleton';
 import ProductFormModal from '../modals/ProductFormModal';
-import { deleteProduct } from '../../store/slices/productsSlice';
-import { useAppDispatch } from '../../store/hooks';
-import { useState } from 'react';
+
+
+
 import './ProductsTab.css';
+import { MoreVertical, Edit, Trash2 } from 'lucide-react';
 
 interface ProductsTabProps { }
 
@@ -52,6 +52,8 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
             }
         }
     };
+
+
 
     return (
         <div className="products-tab-container">
@@ -103,9 +105,6 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
                                     <div className="product-meta-item">
                                         <strong>ID:</strong> {product.id}
                                     </div>
-                                    <div className="product-meta-item">
-                                        <strong>ID:</strong> {product.id}
-                                    </div>
                                 </div>
 
 
@@ -119,31 +118,6 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
                                         <div className="product-price">
                                             ₹{product.price?.toLocaleString()}
                                         </div>
-                                    </div>
-                                    <div className="product-actions-menu-container">
-                                        <button
-                                            className="btn-menu-trigger"
-                                            onClick={(e) => toggleMenu(product.id, e)}
-                                        >
-                                            <span className="dots-icon">⋮</span>
-                                        </button>
-
-                                        {activeMenuId === product.id && (
-                                            <div className="menu-dropdown">
-                                                <button
-                                                    className="menu-item"
-                                                    onClick={() => handleEditProduct(product)}
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    className="menu-item delete"
-                                                    onClick={() => handleDeleteProduct(product.id)}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
                                     <div className="product-actions">
                                         <button
@@ -159,7 +133,7 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
                                                 <button
                                                     className="menu-item"
                                                     onClick={() => {
-                                                        handleEditClick(product);
+                                                        handleEditProduct(product);
                                                         setActiveMenuId(null);
                                                     }}
                                                 >
@@ -169,7 +143,7 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
                                                 <button
                                                     className="menu-item delete-item"
                                                     onClick={() => {
-                                                        handleDelete(product.id);
+                                                        handleDeleteProduct(product.id);
                                                         setActiveMenuId(null);
                                                     }}
                                                 >

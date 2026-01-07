@@ -12,13 +12,9 @@ import {
     fetchPendingUnits,
     setExpandedOrderId,
     setActiveUnitIndex,
-    setShowFullDetails,
-    updateTrackingData,
-    setInitialTracking,
-    fetchStatusCounts
+    setInitialTracking
 } from '../../store/slices/ordersSlice';
 import { setProofModal } from '../../store/slices/uiSlice';
-import Loader from '../common/Loader';
 import Pagination from '../common/Pagination';
 import './OrdersTab.css';
 import TableSkeleton from '../common/TableSkeleton';
@@ -79,7 +75,7 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
         expansion
     } = useAppSelector((state: RootState) => state.orders);
 
-    const { expandedOrderId, activeUnitIndex, showFullDetails } = expansion;
+    const { expandedOrderId, activeUnitIndex } = expansion;
 
     const {
         searchQuery,

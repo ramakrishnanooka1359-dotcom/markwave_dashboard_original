@@ -89,9 +89,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   let activeTab = 'orders';
   if (currentPath.includes('/user-management')) activeTab = 'user-management';
   else if (currentPath.includes('/products')) activeTab = 'products';
-  else if (currentPath.includes('/dashboard/visualizer')) activeTab = 'buffaloViz';
-  else if (currentPath.includes('/dashboard/emi')) activeTab = 'emi';
-  else if (currentPath.includes('/dashboard/acf')) activeTab = 'acf';
+  else if (currentPath.includes('/buffalo-viz')) activeTab = 'buffaloViz';
+  else if (currentPath.includes('/emi-calculator')) activeTab = 'emi';
+  else if (currentPath.includes('/acf-calculator')) activeTab = 'acf';
   else if (currentPath.includes('/orders')) activeTab = 'orders';
 
   const [formData, setFormData] = useState({
@@ -416,10 +416,10 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
             </button>
 
             <img
-              src="/header-logo-new.png"
+              src="/header-logo.png"
               alt="Markwave Logo"
               className="header-logo"
-              style={{ marginLeft: '0px', filter: 'brightness(0) invert(1)' }}
+              style={{ marginLeft: '0px' }}
             />
           </div>
 
@@ -472,10 +472,10 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
               <X size={20} />
             </button>
             <img
-              src="/markwave_dashboard/header-logo-new.png"
+              src="/header-logo.png"
               alt="Markwave Logo"
               className="header-logo-sidebar"
-              style={{ height: '28px', filter: 'brightness(0) invert(1)' }}
+              style={{ height: '28px' }}
             />
           </div>
           <ul className="sidebar-menu" style={{ marginTop: '10px' }}>
