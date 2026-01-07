@@ -1,6 +1,7 @@
 import React from 'react';
 import { useEmi } from '../../context/EmiContext';
 import { LayoutGrid, TrendingUp, CreditCard, Calendar, ShieldCheck } from 'lucide-react';
+import { clsx } from 'clsx';
 
 const ResultCard = () => {
     const {
@@ -29,7 +30,12 @@ const ResultCard = () => {
 
             <div className="bg-[#ebf0f5] rounded-3xl p-5 lg:p-3 mb-4 lg:mb-3 text-center sm:text-left">
                 <p className="text-xs lg:text-[10px] font-bold text-gray-400 mb-1.5 lg:mb-1">Monthly Payment</p>
-                <div className="text-[28px] lg:text-[22px] font-black text-[#3f51b5] leading-tight mb-1.5 lg:mb-1">
+                <div className={clsx(
+                    "font-black text-[#3f51b5] leading-tight mb-1.5 lg:mb-1",
+                    formatCurrency(displayMonthlyPayment).length > 13 ? "text-[18px] lg:text-[16px]" :
+                        formatCurrency(displayMonthlyPayment).length > 10 ? "text-[22px] lg:text-[18px]" :
+                            "text-[28px] lg:text-[22px]"
+                )}>
                     ₹{formatCurrency(displayMonthlyPayment)}
                 </div>
                 <p className="text-xs lg:text-[10px] font-bold text-gray-400">

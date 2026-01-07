@@ -14,7 +14,7 @@ import {
 import { clsx } from 'clsx';
 
 interface GenericCardProps {
-    label: string;
+    label: React.ReactNode;
     value: number;
     colorClass: string;
     borderClass: string;
@@ -26,27 +26,47 @@ interface GenericCardProps {
 
 const GenericCard: React.FC<GenericCardProps> = ({ label, value, colorClass, borderClass, icon: Icon, iconColorClass, shadowClass, prefix = "₹" }) => {
     const { formatCurrency } = useEmi();
+    const formattedValue = formatCurrency(value);
+
+    // Scale font size based on length
+    // 1 Cr = 1,00,00,000 (9 chars + commas) => ~11-13 chars
+    const isLarge = formattedValue.length > 9;
+    const isVeryLarge = formattedValue.length > 12;
+    const isSuperLarge = formattedValue.length > 15;
+
     return (
         <div className={clsx(
-            "p-5 rounded-[24px] flex flex-col justify-between h-[140px] transition-all hover:scale-[1.02] border relative overflow-hidden",
+            "p-3.5 sm:p-5 rounded-[24px] flex flex-col justify-between h-[140px] transition-all hover:scale-[1.02] border relative overflow-hidden",
             colorClass,
             borderClass,
             shadowClass
         )}>
             <div className="flex justify-start">
-                <div className={clsx("p-3 rounded-2xl bg-white/60 backdrop-blur-md shadow-sm w-fit", iconColorClass)}>
+                <div className={clsx(
+                    "grid place-items-center rounded-xl bg-white/60 backdrop-blur-md shadow-sm w-9 h-9 sm:w-10 sm:h-10",
+                    iconColorClass
+                )}>
                     {typeof Icon === 'string' ? (
-                        <img src={Icon} alt="icon" className="w-6 h-6 object-contain" />
+                        <img src={Icon} alt="icon" className="w-4 h-4 sm:w-5 sm:h-5 object-contain" />
                     ) : (
-                        <Icon className="w-6 h-6 opacity-90" />
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5 opacity-90" />
                     )}
                 </div>
             </div>
-            <div className="space-y-0.5 relative z-10">
-                <p className="text-xs sm:text-[13px] font-semibold text-gray-900 tracking-tight">{label}</p>
-                <div className="text-lg sm:text-[22px] font-extrabold tracking-tight flex items-baseline gap-1">
-                    <span className="text-sm sm:text-[16px] font-bold opacity-70">{prefix}</span>
-                    {formatCurrency(value)}
+            <div className="space-y-0 relative z-10">
+                <div className="text-[11px] sm:text-[13px] font-semibold text-gray-900 tracking-tight leading-tight mb-0.5">{label}</div>
+                <div className={clsx(
+                    "font-extrabold tracking-tighter flex items-baseline gap-0.5",
+                    isSuperLarge ? "text-[11px] sm:text-[13px]" :
+                        isVeryLarge ? "text-[13px] sm:text-[15px]" :
+                            isLarge ? "text-[15px] sm:text-[18px]" :
+                                "text-[18px] sm:text-[22px]"
+                )}>
+                    <span className={clsx(
+                        "font-bold opacity-70",
+                        isVeryLarge ? "text-[9px] sm:text-[11px]" : "text-[11px] sm:text-[13px]"
+                    )}>{prefix}</span>
+                    <span className="truncate">{formattedValue}</span>
                 </div>
             </div>
         </div>
@@ -106,7 +126,12 @@ const SimulationSummary = () => {
                     iconColorClass="text-[#2E7D32]"
                 />
                 <GenericCard
-                    label="Total Payment"
+                    label={
+                        <div className="flex flex-col">
+                            <span>Total Payment</span>
+                            <span className="text-[10px] sm:text-[11px] font-medium opacity-90 leading-tight">(EMI+CPF+CGF)</span>
+                        </div>
+                    }
                     value={totalPayment + totalCpf + totalCgf}
                     colorClass="bg-[#FFF3E0] text-[#EF6C00]" // Orange
                     borderClass="border-[#FFE0B2]"
@@ -115,7 +140,7 @@ const SimulationSummary = () => {
                     iconColorClass="text-[#EF6C00]"
                 />
                 <GenericCard
-                    label="Total EMI"
+                    label="Loan Paid"
                     value={totalPayment}
                     colorClass="bg-[#F3E5F5] text-[#7B1FA2]" // Purple
                     borderClass="border-[#E1BEE7]"
@@ -132,7 +157,7 @@ const SimulationSummary = () => {
                     icon={PawPrint}
                     iconColorClass="text-[#FBC02D]"
                 />
-                <GenericCard
+                {/* <GenericCard
                     label="Total CGF"
                     value={displayCgf}
                     colorClass="bg-[#EFEBE9] text-[#5D4037]" // Brown
@@ -140,7 +165,7 @@ const SimulationSummary = () => {
                     shadowClass="shadow-[0_4px_15px_rgb(93,64,55,0.1)]"
                     icon={Sprout}
                     iconColorClass="text-[#5D4037]"
-                />
+                /> */}
                 <GenericCard
                     label="Total Profit"
                     value={totalProfit}

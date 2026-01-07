@@ -46,7 +46,10 @@ const InputCard = () => {
                             onChange={(e) => {
                                 const valStr = e.target.value.replace(/,/g, '');
                                 if (!isNaN(Number(valStr))) {
-                                    const val = Number(valStr);
+                                    let val = Number(valStr);
+                                    // Limit to 10 Crores
+                                    if (val > 100000000) val = 100000000;
+
                                     setAmount(val);
                                     // Sync Units: Floor(Amount / 4L)
                                     // 10L -> 2.5 -> 2
@@ -89,11 +92,12 @@ const InputCard = () => {
                             <p className="text-[9px] lg:text-[8px] text-gray-400 font-bold">Cattle Growth Fund</p>
                             <p className="text-[9px] lg:text-[8px] text-gray-400">Growth Fund</p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className="relative inline-flex items-center cursor-not-allowed opacity-50">
                             <input
                                 type="checkbox"
                                 checked={cgfEnabled}
                                 onChange={(e) => setCgfEnabled(e.target.checked)}
+                                disabled={true}
                                 className="sr-only peer"
                             />
                             <div className="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#f59e0b]"></div>
@@ -132,7 +136,12 @@ const InputCard = () => {
                             const val = e.target.value;
                             if (val === '') setUnits(0);
                             else {
-                                const num = Number(val);
+                                let num = Number(val);
+                                // Limit units to equivalent of 10 Crores (10Cr / 4L = 250)
+                                if (num * UNIT_COST > 100000000) {
+                                    num = Math.floor(100000000 / UNIT_COST);
+                                }
+
                                 if (!isNaN(num) && num >= 0) {
                                     setUnits(num);
                                     // Sync Amount: Units * 4L
