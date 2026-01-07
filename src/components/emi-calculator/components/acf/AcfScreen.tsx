@@ -14,8 +14,8 @@ const AcfScreen = () => {
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold text-primary-900">Affordable Crowd Farming</h1>
-                <p className="text-lg text-gray-600 mt-2">Invest small, earn big with crowd-funded farming units.</p>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary-900">Affordable Crowd Farming</h1>
+                <p className="text-sm sm:text-base lg:text-lg text-gray-600 mt-2">Invest small, earn big with crowd-funded farming units.</p>
             </div>
 
             {/* Tenure Selection */}
@@ -53,7 +53,7 @@ const TenureButton: React.FC<TenureButtonProps> = ({ label, selected, onClick })
         <button
             onClick={onClick}
             className={clsx(
-                "px-6 py-2.5 rounded-full font-semibold transition-all shadow-sm",
+                "px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-semibold transition-all shadow-sm max-[320px]:px-4 max-[320px]:py-2 max-[320px]:text-xs",
                 selected
                     ? "bg-primary-600 text-white shadow-primary-200"
                     : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"

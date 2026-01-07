@@ -18,7 +18,7 @@ const AmortizationTable = () => {
                     <button
                         onClick={() => setViewMode('yearly')}
                         className={clsx(
-                            "px-8 py-2.5 rounded-full text-sm font-bold transition-all",
+                            "px-8 py-2.5 rounded-full text-sm font-bold transition-all max-[320px]:px-4 max-[320px]:py-2 max-[320px]:text-xs",
                             viewMode === 'yearly' ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"
                         )}
                     >
@@ -27,7 +27,7 @@ const AmortizationTable = () => {
                     <button
                         onClick={() => setViewMode('monthly')}
                         className={clsx(
-                            "px-8 py-2.5 rounded-full text-sm font-bold transition-all",
+                            "px-8 py-2.5 rounded-full text-sm font-bold transition-all max-[320px]:px-4 max-[320px]:py-2 max-[320px]:text-xs",
                             viewMode === 'monthly' ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"
                         )}
                     >
@@ -35,8 +35,8 @@ const AmortizationTable = () => {
                     </button>
                 </div>
 
-                <button className="p-3 bg-[#eaebed] rounded-2xl hover:bg-gray-200 transition-colors">
-                    <Download className="w-5 h-5 text-gray-700" />
+                <button className="w-11 h-11 bg-[#eaebed] rounded-2xl hover:bg-gray-200 transition-colors flex items-center justify-center">
+                    <Download className="w-[18px] h-[18px] text-gray-700" />
                 </button>
             </div>
 

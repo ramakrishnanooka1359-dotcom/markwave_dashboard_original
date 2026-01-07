@@ -8,7 +8,8 @@ import {
     Sprout,
     TrendingUp,
     AlertCircle,
-    Banknote
+    Banknote,
+    IndianRupee
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -42,9 +43,9 @@ const GenericCard: React.FC<GenericCardProps> = ({ label, value, colorClass, bor
                 </div>
             </div>
             <div className="space-y-0.5 relative z-10">
-                <p className="text-[13px] font-semibold text-gray-900 tracking-tight">{label}</p>
-                <div className="text-[22px] font-extrabold tracking-tight flex items-baseline gap-1">
-                    <span className="text-[16px] font-bold opacity-70">{prefix}</span>
+                <p className="text-xs sm:text-[13px] font-semibold text-gray-900 tracking-tight">{label}</p>
+                <div className="text-lg sm:text-[22px] font-extrabold tracking-tight flex items-baseline gap-1">
+                    <span className="text-sm sm:text-[16px] font-bold opacity-70">{prefix}</span>
                     {formatCurrency(value)}
                 </div>
             </div>
@@ -94,14 +95,14 @@ const SimulationSummary = () => {
     return (
         <div className="space-y-12 mt-12 px-2 pb-8">
             {/* Summary Grid - Responsive across all breakpoints */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                 <GenericCard
                     label="Total Revenue"
                     value={totalRevenue}
                     colorClass="bg-[#E8F5E9] text-[#2E7D32]" // Green
                     borderClass="border-[#A5D6A7]"
                     shadowClass="shadow-[0_4px_15px_rgb(46,125,50,0.1)]"
-                    icon={Wallet}
+                    icon={IndianRupee}
                     iconColorClass="text-[#2E7D32]"
                 />
                 <GenericCard

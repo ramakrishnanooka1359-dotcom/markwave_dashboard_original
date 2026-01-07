@@ -23,19 +23,19 @@ const EmiDashboard = () => {
   const roiPercentage = amount > 0 ? ((totalReturn / amount) * 100).toFixed(1) + '%' : '0.0%';
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 lg:space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Banner Card */}
-      <div className="bg-[#f0f2f5] rounded-3xl p-3 flex items-center space-x-6 border border-gray-100">
-        <div className="bg-primary-100 p-4 rounded-2xl">
-          <LayoutGrid className="w-5 h-5 text-primary-700" />
+      <div className="bg-[#f0f2f5] rounded-3xl p-3 lg:p-2 flex items-center space-x-6 lg:space-x-3 border border-gray-100">
+        <div className="bg-primary-100 p-4 lg:p-2 rounded-2xl">
+          <LayoutGrid className="w-5 h-5 lg:w-4 lg:h-4 text-primary-700" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Crowd Farming Investment</h2>
-          <p className="text-gray-500 text-sm">Get instant loan calculations with detailed payment breakdown</p>
+          <h2 className="text-xl lg:text-base font-bold text-gray-900">Crowd Farming Investment</h2>
+          <p className="text-gray-500 text-sm lg:text-xs">Get instant loan calculations with detailed payment breakdown</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-4">
         <div className="lg:col-span-4">
           <InputCard />
         </div>
@@ -46,15 +46,15 @@ const EmiDashboard = () => {
 
         <div className="lg:col-span-5">
           {/* Quick Stats Bento Grid */}
-          <div className="bg-white rounded-3xl shadow-lg p-8 h-full flex flex-col border border-gray-50">
-            <div className="flex items-center space-x-2 mb-8">
-              <div className="p-2 bg-teal-50 rounded-lg">
-                <TrendingUp className="w-5 h-5 text-teal-600" />
+          <div className="bg-white rounded-3xl shadow-lg p-4 lg:p-3 h-full flex flex-col border border-gray-50">
+            <div className="flex items-center space-x-2 lg:space-x-1.5 mb-4 lg:mb-3">
+              <div className="p-1.5 lg:p-1 bg-teal-50 rounded-lg">
+                <TrendingUp className="w-4 h-4 lg:w-3.5 lg:h-3.5 text-teal-600" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-900">Quick Stats</h2>
+              <h2 className="text-lg lg:text-sm font-semibold text-gray-900">Quick Stats</h2>
             </div>
 
-            <div className="flex flex-col gap-4 flex-grow">
+            <div className="flex flex-col gap-3 lg:gap-2 flex-grow">
               <div className="w-full">
                 <HoverGradientStatCard
                   label="Total Return"
@@ -101,8 +101,8 @@ const EmiDashboard = () => {
 const AppContent = ({ mode = 'emi' }: { mode?: 'emi' | 'acf' }) => {
   return (
     <MainLayout>
-      <div className="flex justify-between items-center mb-5">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+      <div className="flex justify-between items-center mb-5 lg:mb-3">
+        <h1 className="text-2xl lg:text-xl font-bold text-gray-900 tracking-tight">
           {mode === 'emi' ? 'EMI Calculator' : 'ACF Calculator'}
         </h1>
 

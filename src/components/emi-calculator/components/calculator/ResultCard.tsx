@@ -19,25 +19,25 @@ const ResultCard = () => {
     const displayMonthlyPayment = emi; // Flutter screenshot shows EMI as main Monthly Payment
 
     return (
-        <div className="bg-white rounded-3xl p-6 h-full border border-gray-100 shadow-lg">
-            <div className="flex items-center space-x-3 mb-6">
-                <div className="p-2 bg-[#f0f9f1] rounded-lg">
-                    <LayoutGrid className="w-5 h-5 text-[#4caf50]" />
+        <div className="bg-white rounded-3xl p-4 lg:p-3 border border-gray-100 shadow-lg h-full flex flex-col">
+            <div className="flex items-center space-x-2 lg:space-x-1.5 mb-2 lg:mb-1.5">
+                <div className="p-1.5 lg:p-1 bg-[#f0f9f1] rounded-lg">
+                    <LayoutGrid className="w-4 h-4 lg:w-3.5 lg:h-3.5 text-[#4caf50]" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-800">EMI Results</h2>
+                <h2 className="text-lg lg:text-sm font-bold text-gray-800">EMI Results</h2>
             </div>
 
-            <div className="bg-[#ebf0f5] rounded-3xl p-6 mb-8 text-center sm:text-left">
-                <p className="text-sm font-bold text-gray-400 mb-2">Monthly Payment</p>
-                <div className="text-[32px] font-black text-[#3f51b5] leading-tight mb-2">
+            <div className="bg-[#ebf0f5] rounded-3xl p-5 lg:p-3 mb-4 lg:mb-3 text-center sm:text-left">
+                <p className="text-xs lg:text-[10px] font-bold text-gray-400 mb-1.5 lg:mb-1">Monthly Payment</p>
+                <div className="text-[28px] lg:text-[22px] font-black text-[#3f51b5] leading-tight mb-1.5 lg:mb-1">
                     ₹{formatCurrency(displayMonthlyPayment)}
                 </div>
-                <p className="text-sm font-bold text-gray-400">
+                <p className="text-xs lg:text-[10px] font-bold text-gray-400">
                     Monthly EMI: {formatCurrency(emi)}
                 </p>
             </div>
 
-            <div className="space-y-5 px-1">
+            <div className="space-y-5  px-1 flex-grow mt-3">
                 <ResultRow
                     label="Total Interest"
                     value={formatCurrency(totalInterest)}

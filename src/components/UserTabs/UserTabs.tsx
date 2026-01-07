@@ -114,12 +114,19 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   useEffect(() => {
+    // Initial state check
+    if (window.innerWidth <= 768) {
+      dispatch(setSidebarOpen(false));
+    } else {
+      dispatch(setSidebarOpen(true));
+    }
+
     const handleResize = () => {
-      if (window.innerWidth < 768) {
+      if (window.innerWidth <= 768) {
         dispatch(setSidebarOpen(false));
-      } else {
-        dispatch(setSidebarOpen(true));
       }
+      // On desktop, we don't force open/close to allow user preference (collapsed vs open)
+      // to persist during resize
     };
 
     window.addEventListener('resize', handleResize);
