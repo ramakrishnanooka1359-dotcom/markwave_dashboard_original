@@ -113,12 +113,11 @@ const InputCard = () => {
                             <p className="text-[9px] lg:text-[8px] text-gray-400 font-bold">Cattle Growth Fund</p>
                             <p className="text-[9px] lg:text-[8px] text-gray-400">Growth Fund</p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-not-allowed opacity-50">
+                        <label className="relative inline-flex items-center cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={cgfEnabled}
                                 onChange={(e) => setCgfEnabled(e.target.checked)}
-                                disabled={true}
                                 className="sr-only peer"
                             />
                             <div className="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#f59e0b]"></div>
