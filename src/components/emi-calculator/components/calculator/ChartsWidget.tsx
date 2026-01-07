@@ -5,7 +5,7 @@ import { Download } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const ChartsWidget = () => {
-    const { amount, totalPayment, totalInterest, months, emi, formatCurrency } = useEmi();
+    const { amount, totalPayment, totalInterest, months, emi, formatCurrency, yearlySchedule } = useEmi();
 
     return (
         <div className="space-y-4">
@@ -19,6 +19,7 @@ const ChartsWidget = () => {
                 <BarChartWidget
                     months={months}
                     emi={emi}
+                    yearlySchedule={yearlySchedule}
                     formatCurrency={formatCurrency}
                 />
             </div>
@@ -78,7 +79,38 @@ const PieChartWidget: React.FC<PieChartWidgetProps> = ({ amount, totalPayment, t
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                         </Pie>
-                        <Tooltip formatter={(value: any) => `₹${formatCurrency(value || 0)}`} />
+                        <Tooltip
+                            formatter={(value: any) => `₹${formatCurrency(value || 0)}`}
+                            position={((coordinate: any, event: any, element: any, view: any) => {
+                                if (!view || !view.width || !view.height || !coordinate) return coordinate;
+                                const cx = view.width / 2;
+                                const cy = view.height / 2;
+                                const dx = coordinate.x - cx;
+                                const dy = coordinate.y - cy;
+                                const angle = Math.atan2(dy, dx);
+                                const radius = 135; // Increased radius
+
+                                let x = cx + radius * Math.cos(angle);
+                                let y = cy + radius * Math.sin(angle);
+
+                                // Estimated tooltip dimensions (generous)
+                                const tooltipWidth = 180;
+                                const tooltipHeight = 100;
+
+                                // Shift if on the left half
+                                if (x < cx) {
+                                    x -= tooltipWidth;
+                                }
+
+                                // Shift if on the top half
+                                if (y < cy) {
+                                    y -= tooltipHeight;
+                                }
+
+                                return { x, y };
+                            }) as any}
+                            allowEscapeViewBox={{ x: true, y: true }}
+                        />
                     </PieChart>
                 </ResponsiveContainer>
 
@@ -106,10 +138,11 @@ const PieChartWidget: React.FC<PieChartWidgetProps> = ({ amount, totalPayment, t
 interface BarChartWidgetProps {
     months: number;
     emi: number;
+    yearlySchedule: any[];
     formatCurrency: (val: number) => string;
 }
 
-const BarChartWidget: React.FC<BarChartWidgetProps> = ({ months, emi, formatCurrency }) => {
+const BarChartWidget: React.FC<BarChartWidgetProps> = ({ months, emi, yearlySchedule, formatCurrency }) => {
     const [barSize, setBarSize] = React.useState(32);
 
     React.useEffect(() => {
@@ -123,6 +156,17 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({ months, emi, formatCurr
     }, []);
 
     const data = useMemo(() => {
+        // Use yearlySchedule if available, otherwise fallback
+        if (yearlySchedule && yearlySchedule.length > 0) {
+            return yearlySchedule.map((row) => ({
+                name: `Y${row.month}`,
+                amount: row.emi,
+                cpf: row.cpf,
+                cgf: row.cgf,
+                fill: (row.month - 1) % 2 === 0 ? '#42a5f5' : '#009688'
+            }));
+        }
+
         const years = Math.ceil(months / 12);
         const chartData = [];
 
@@ -133,16 +177,45 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({ months, emi, formatCurr
             chartData.push({
                 name: `Y${i + 1}`,
                 amount: yearlyTotal,
+                cpf: 0,
+                cgf: 0,
                 fill: i % 2 === 0 ? '#42a5f5' : '#009688'
             });
         }
         return chartData;
-    }, [months, emi]);
+    }, [months, emi, yearlySchedule]);
 
     const formatCompact = (value: number) => {
         if (value >= 100000) return (value / 100000).toFixed(1) + 'L';
         if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
         return String(value);
+    };
+
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+            const data = payload[0].payload;
+            return (
+                <div className="bg-white p-3 border border-gray-100 shadow-md rounded-xl text-left">
+                    <p className="text-gray-500 text-xs font-bold mb-1">{label}</p>
+                    <div className="space-y-0.5">
+                        <p className="text-sm font-bold text-gray-800">
+                            Payment : <span className="font-mono">₹{formatCurrency(data.amount)}</span>
+                        </p>
+                        {data.cpf > 0 && (
+                            <p className="text-xs font-semibold text-gray-600">
+                                CPF : <span className="font-mono">₹{formatCurrency(data.cpf)}</span>
+                            </p>
+                        )}
+                        {data.cgf > 0 && (
+                            <p className="text-xs font-semibold text-gray-600">
+                                CGF : <span className="font-mono">₹{formatCurrency(data.cgf)}</span>
+                            </p>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+        return null;
     };
 
     return (
@@ -165,10 +238,7 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({ months, emi, formatCurr
                             tick={{ fontSize: 10, fill: '#9ca3af', fontWeight: 'semibold' }}
                             tickFormatter={formatCompact}
                         />
-                        <Tooltip
-                            formatter={(value: any) => [`₹${formatCurrency(value || 0)}`, 'Payment']}
-                            cursor={{ fill: 'rgba(0,0,0,0.02)' }}
-                        />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
                         <Bar
                             dataKey="amount"
                             radius={[8, 8, 0, 0]}

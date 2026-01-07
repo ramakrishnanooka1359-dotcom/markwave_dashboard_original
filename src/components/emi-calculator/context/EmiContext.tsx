@@ -382,15 +382,7 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const orderMonthBuff1 = 1;
         const orderMonthBuff2 = 7;
 
-        // Adults age
-        // const addAdult = (startMonth) => {
-        //     if (startMonth <= tenureMonths) {
-        //         ages.push((tenureMonths - startMonth) + 36);
-        //     }
-        // }
-
-        // Simpler approach for now:
-        // Just return list of ages for offspring.
+        // Just return list of ages for offspring (for a SINGLE unit).
         const offspringAges: number[] = [];
         const trackOffspring = (startMonth: number) => {
             // Direct 
@@ -409,23 +401,21 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         trackOffspring(orderMonthBuff1);
         trackOffspring(orderMonthBuff2);
 
-        // Repeat for each unit
-        const totalOffspringAges: number[] = [];
-        for (let i = 0; i < unitCount; i++) {
-            totalOffspringAges.push(...offspringAges);
-        }
-
-        return totalOffspringAges;
+        // We return the ages for a SINGLE unit now, to avoid massive array creation crash.
+        // multi-unit scaling happens in calculateAssetValueFromSimulation
+        return offspringAges;
     };
 
-    const calculateAssetValueFromSimulation = (offspringAges: number[], pUnits: number) => {
+    const calculateAssetValueFromSimulation = (singleUnitOffspringAges: number[], pUnits: number) => {
         const adultValue = 60000 * 2 * pUnits;
 
-        let offspringValue = 0;
-        for (const age of offspringAges) {
-            offspringValue += getValuationForAge(age);
+        let singleUnitOffspringValue = 0;
+        for (const age of singleUnitOffspringAges) {
+            singleUnitOffspringValue += getValuationForAge(age);
         }
-        return adultValue + offspringValue;
+
+        // Total = Adults + (Single Unit Offspring Total * Unit Count)
+        return adultValue + (singleUnitOffspringValue * pUnits);
     }
 
     // --- Effects to Update State ---
