@@ -80,14 +80,14 @@ interface ResultRowProps {
 
 const ResultRow: React.FC<ResultRowProps> = ({ label, value, icon: Icon }) => {
     return (
-        <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-lg bg-[#ebf0f5] flex items-center justify-center">
+        <div className="flex items-end justify-between">
+            <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-[#ebf0f5] flex items-center justify-center mt-0.5 shrink-0">
                     <Icon className="w-4 h-4 text-[#3f51b5]" />
                 </div>
-                <span className="text-[13px] font-bold text-gray-500">{label}:</span>
+                <span className="text-[13px] font-bold text-gray-500 leading-tight">{label}:</span>
             </div>
-            <span className="text-[14px] font-black text-gray-800">{value}</span>
+            <span className="text-[14px] font-black text-gray-800 leading-none pb-0.5">{value}</span>
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useEmi } from '../../context/EmiContext';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Sector } from 'recharts';
 import { Download } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -34,90 +34,152 @@ interface PieChartWidgetProps {
     formatCurrency: (val: number) => string;
 }
 
+interface ChartDataPoint {
+    name: string;
+    value: number;
+    color: string;
+    percentage: number;
+    [key: string]: any;
+}
+
 const PieChartWidget: React.FC<PieChartWidgetProps> = ({ amount, totalPayment, totalInterest, formatCurrency }) => {
-    const data = [
-        { name: 'Principal', value: amount, color: '#42a5f5' },
-        { name: 'Interest', value: totalInterest, color: '#ef5350' },
-    ];
+    const [hoveredData, setHoveredData] = React.useState<ChartDataPoint | null>(null);
+    const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
 
     const interestPercentage = totalPayment > 0 ? (totalInterest / totalPayment) * 100 : 0;
     const principalPercentage = totalPayment > 0 ? (amount / totalPayment) * 100 : 0;
 
-    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
-        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const data: ChartDataPoint[] = [
+        { name: 'Principal', value: amount, color: '#42a5f5', percentage: principalPercentage },
+        { name: 'Interest', value: totalInterest, color: '#ef5350', percentage: interestPercentage },
+    ];
+
+    const renderActiveShape = (props: any) => {
+        const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, percent } = props;
         const RADIAN = Math.PI / 180;
+        const midAngle = (startAngle + endAngle) / 2;
+        // Move label out slightly to follow the expansion (+6 padding)
+        const radius = innerRadius + (outerRadius - innerRadius) * 0.5 + 3;
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
         const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
         return (
-            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-[10px] font-bold">
+            <g>
+                <Sector
+                    cx={cx}
+                    cy={cy}
+                    innerRadius={innerRadius}
+                    outerRadius={outerRadius + 6}
+                    startAngle={startAngle}
+                    endAngle={endAngle}
+                    fill={fill}
+                    stroke="#fff"
+                    strokeWidth={2}
+                />
+                <text
+                    x={x}
+                    y={y}
+                    fill="white"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    className="text-[12px] font-black pointer-events-none"
+                    style={{ filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.8))' }}
+                >
+                    {`${(percent * 100).toFixed(1)}%`}
+                </text>
+            </g>
+        );
+    };
+
+    const renderCustomizedLabel = (props: any) => {
+        const { cx, cy, midAngle, innerRadius, outerRadius, percent, index } = props;
+
+        // Hide static label for the hovered slice so renderActiveShape can handle its expanded position
+        if (index === activeIndex) return null;
+
+        const RADIAN = Math.PI / 180;
+        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+        return (
+            <text
+                x={x}
+                y={y}
+                fill="white"
+                textAnchor="middle"
+                dominantBaseline="central"
+                className="text-[12px] font-black pointer-events-none"
+                style={{ filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.8))' }}
+            >
                 {`${(percent * 100).toFixed(1)}%`}
             </text>
         );
     };
 
+    const clearHover = () => {
+        setHoveredData(null);
+        setActiveIndex(null);
+    };
+
     return (
-        <div className="bg-white rounded-3xl shadow-lg p-6 border border-gray-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-6 font-mono tracking-tight">Payment Breakdown</h3>
-            <div className="h-64 relative">
+        <div
+            className="bg-white rounded-3xl shadow-lg p-8 h-full min-h-[480px] flex flex-col transition-all duration-300"
+            onMouseLeave={clearHover}
+        >
+            <h3 className="text-xl font-bold text-gray-800 mb-8 font-mono tracking-tight">Payment Breakdown</h3>
+            <div className="flex-grow relative min-h-[350px]" onMouseLeave={clearHover}>
                 <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart onMouseLeave={clearHover}>
                         <Pie
+                            {...({
+                                activeIndex: activeIndex !== null ? activeIndex : undefined,
+                                activeShape: renderActiveShape,
+                            } as any)}
                             data={data}
                             cx="50%"
                             cy="50%"
-                            innerRadius={70}
-                            outerRadius={110}
+                            innerRadius={80}
+                            outerRadius={135}
                             paddingAngle={0}
                             dataKey="value"
                             startAngle={90}
                             endAngle={450}
                             labelLine={false}
                             label={renderCustomizedLabel}
+                            onMouseEnter={(_, index) => {
+                                setHoveredData(data[index]);
+                                setActiveIndex(index);
+                            }}
+                            onMouseLeave={clearHover}
+                            stroke="#fff"
+                            strokeWidth={2}
+                            animationDuration={250}
                         >
                             {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                <Cell
+                                    key={`cell-${index}`}
+                                    fill={entry.color}
+                                    stroke="#fff"
+                                    strokeWidth={2}
+                                    onMouseLeave={clearHover}
+                                />
                             ))}
                         </Pie>
-                        <Tooltip
-                            formatter={(value: any) => `₹${formatCurrency(value || 0)}`}
-                            position={((coordinate: any, event: any, element: any, view: any) => {
-                                if (!view || !view.width || !view.height || !coordinate) return coordinate;
-                                const cx = view.width / 2;
-                                const cy = view.height / 2;
-                                const dx = coordinate.x - cx;
-                                const dy = coordinate.y - cy;
-                                const angle = Math.atan2(dy, dx);
-                                const radius = 135; // Increased radius
-
-                                let x = cx + radius * Math.cos(angle);
-                                let y = cy + radius * Math.sin(angle);
-
-                                // Estimated tooltip dimensions (generous)
-                                const tooltipWidth = 180;
-                                const tooltipHeight = 100;
-
-                                // Shift if on the left half
-                                if (x < cx) {
-                                    x -= tooltipWidth;
-                                }
-
-                                // Shift if on the top half
-                                if (y < cy) {
-                                    y -= tooltipHeight;
-                                }
-
-                                return { x, y };
-                            }) as any}
-                            allowEscapeViewBox={{ x: true, y: true }}
-                        />
                     </PieChart>
                 </ResponsiveContainer>
 
                 {/* Center Text */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-xs text-gray-400 font-bold">Total</span>
-                    <span className="text-sm font-black text-gray-800">₹{formatCurrency(totalPayment)}</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                    <span className="text-[11px] text-gray-400 font-bold mb-0.5 uppercase tracking-widest">
+                        {hoveredData ? hoveredData.name : 'Total'}
+                    </span>
+                    <span className="text-[22px] font-black text-gray-900 tracking-tight">
+                        ₹{(hoveredData ? hoveredData.value : totalPayment).toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        })}
+                    </span>
                 </div>
             </div>
 
@@ -199,7 +261,7 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({ months, emi, yearlySche
                     <p className="text-gray-500 text-xs font-bold mb-1">{label}</p>
                     <div className="space-y-0.5">
                         <p className="text-sm font-bold text-gray-800">
-                            Payment : <span className="font-mono">₹{formatCurrency(data.amount)}</span>
+                            Monthly EMI : <span className="font-mono">₹{formatCurrency(data.amount)}</span>
                         </p>
                         {data.cpf > 0 && (
                             <p className="text-xs font-semibold text-gray-600">
@@ -219,7 +281,7 @@ const BarChartWidget: React.FC<BarChartWidgetProps> = ({ months, emi, yearlySche
     };
 
     return (
-        <div className="bg-white rounded-3xl shadow-lg p-6 border border-gray-200">
+        <div className="bg-white rounded-3xl shadow-lg p-6">
             <h3 className="text-lg font-bold text-gray-800 mb-6 font-mono tracking-tight">Yearly Overview</h3>
             <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">

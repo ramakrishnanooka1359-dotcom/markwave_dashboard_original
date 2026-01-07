@@ -110,7 +110,7 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [months, setMonths] = useState(60);
     const [units, setUnits] = useState(1);
     const [cpfEnabled, setCpfEnabled] = useState(true);
-    const [cgfEnabled, setCgfEnabled] = useState(true);
+    const [cgfEnabled, setCgfEnabled] = useState(false);
 
     // --- ACF State ---
     const [acfUnits, setAcfUnits] = useState(1);

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useEmi } from '../../context/EmiContext';
 import { Pencil, Landmark, Info, Smartphone } from 'lucide-react';
+import { numberToIndianWords } from '../../utils/numberToWords';
 
 const InputCard = () => {
     const {
@@ -13,14 +14,35 @@ const InputCard = () => {
         cgfEnabled, setCgfEnabled
     } = useEmi();
 
+    const [localAmount, setLocalAmount] = React.useState(amount);
+
+    const UNIT_COST = 400000;
+
+    // Sync local amount when global amount changes (e.g., on mount or reset)
+    React.useEffect(() => {
+        setLocalAmount(amount);
+    }, [amount]);
+
+    // Debounce effect: sync local amount to global context after 2 seconds
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            if (localAmount !== amount) {
+                setAmount(localAmount);
+                // Sync Units: Floor(Amount / 4L)
+                const calcUnits = Math.floor(localAmount / UNIT_COST);
+                setUnits(calcUnits >= 1 ? calcUnits : 1);
+            }
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, [localAmount, amount, setAmount, setUnits]);
+
     const perUnitBase = 350000.0;
     const perUnitCpf = 15000.0;
     const requiredBase = perUnitBase * units;
     const requiredCpf = cpfEnabled ? perUnitCpf * units : 0;
     const totalRequired = requiredBase + requiredCpf;
     const surplus = amount - totalRequired;
-
-    const UNIT_COST = 400000;
 
     return (
         <div className="bg-white rounded-3xl p-4 lg:p-3 space-y-2 lg:space-y-1.5 border border-gray-100 shadow-lg h-full flex flex-col">
@@ -42,26 +64,25 @@ const InputCard = () => {
                         <span className="text-gray-600 font-bold mr-1 text-sm">₹</span>
                         <input
                             type="text"
-                            value={formatCurrency(amount)}
+                            value={formatCurrency(localAmount)}
                             onChange={(e) => {
                                 const valStr = e.target.value.replace(/,/g, '');
                                 if (!isNaN(Number(valStr))) {
                                     let val = Number(valStr);
                                     // Limit to 10 Crores
                                     if (val > 100000000) val = 100000000;
-
-                                    setAmount(val);
-                                    // Sync Units: Floor(Amount / 4L)
-                                    // 10L -> 2.5 -> 2
-                                    // 5L -> 1.25 -> 1
-                                    const calcUnits = Math.floor(val / UNIT_COST);
-                                    setUnits(calcUnits >= 1 ? calcUnits : 1);
+                                    setLocalAmount(val);
                                 }
                             }}
                             className="bg-transparent border-none focus:outline-none w-full text-gray-800 font-bold text-base"
                         />
                     </div>
                 </div>
+                {localAmount > 0 && (
+                    <div className="text-[10px] sm:text-[11px] font-bold text-primary-600 ml-1 transition-all animate-in fade-in slide-in-from-top-1">
+                        {numberToIndianWords(localAmount)} Rupees
+                    </div>
+                )}
             </div>
 
             {/* CPF and CGF Group */}

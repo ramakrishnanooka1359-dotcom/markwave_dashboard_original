@@ -210,7 +210,7 @@ const SimulationSummary = () => {
                 <div className="space-y-2">
                     <SummaryRow label="Total Loan Amount" value={amount} formatCurrency={formatCurrency} />
                     <SummaryRow label="Total Interest" value={totalInterest} formatCurrency={formatCurrency} />
-                    <SummaryRow label="Total Payment" value={totalPayment} formatCurrency={formatCurrency} />
+                    <SummaryRow label="Loan Paid" value={totalPayment} formatCurrency={formatCurrency} />
 
                     <div className="h-[1px] bg-gray-300 my-4" />
 
