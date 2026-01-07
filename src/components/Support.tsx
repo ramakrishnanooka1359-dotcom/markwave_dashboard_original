@@ -1,5 +1,50 @@
 import React, { useState } from 'react';
 import './Support.css';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+
+interface FAQ {
+    question: string;
+    answer: string;
+}
+
+const FAQS: FAQ[] = [
+    {
+        question: "What is the Cattle Protection Fund (CPF)?",
+        answer: "The Cattle Protection Fund (CPF) is a mandatory component for every buffalo unit purchase. It ensures the welfare and protection of the livestock. The cost is fixed at ₹26,000 per unit, which includes 2 buffaloes and 2 calves."
+    },
+    {
+        question: "How is my personal data used?",
+        answer: "We use your data primarily for account management, transaction verification (especially for manual payments), and to provide investment projections. We respect your privacy and only share data with essential partners like insurance providers."
+    },
+    {
+        question: "How does the referral program work?",
+        answer: "When you refer a friend who completes a purchase, you earn 2% of their total purchase amount as Referral Coins. These coins are credited to your account and can be used for future unit purchases."
+    },
+    {
+        question: "Can I withdraw my referral coins as cash?",
+        answer: "No, Referral Coins are non-transferable and cannot be withdrawn as cash. However, once you accumulate 363,000 coins, you can use them to purchase a full buffalo unit."
+    },
+    {
+        question: "How long does payment verification take?",
+        answer: "For manual payments (Bank Transfer or Cheque), our Admin Team typically completes verification within 3 business days. Once verified, your order status will change from 'Pending' to 'Paid', and you can download your invoice."
+    }
+];
+
+const FAQItem: React.FC<{ item: FAQ }> = ({ item }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div className={`faq-item ${isOpen ? 'open' : ''}`} onClick={() => setIsOpen(!isOpen)}>
+            <div className="faq-question">
+                <span>{item.question}</span>
+                {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </div>
+            <div className={`faq-answer ${isOpen ? 'show' : ''}`}>
+                <p>{item.answer}</p>
+            </div>
+        </div>
+    );
+};
 
 const Support: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -36,7 +81,16 @@ const Support: React.FC = () => {
         <div className="support-container">
             <div className="support-header">
                 <h1>Contact Support</h1>
-                <p>We are here to help. Fill out the form below to get in touch.</p>
+                <p>We are here to help. Check our FAQs or fill out the form below.</p>
+            </div>
+
+            <div className="faq-section">
+                <h2>Frequently Asked Questions</h2>
+                <div className="faq-list">
+                    {FAQS.map((faq, index) => (
+                        <FAQItem key={index} item={faq} />
+                    ))}
+                </div>
             </div>
 
             <div className="support-form-card">
