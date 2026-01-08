@@ -65,6 +65,31 @@ const DEFAULT_CONTENT = `
         <p>As the Animal Cart application evolves—potentially adding features like milk sales management or veterinary services—this policy may be updated.</p>
     </div>
 
+    <div class="privacy-section">
+        <h2>7. KYC & Government Identification Data</h2>
+        <p>We may collect government-issued identification documents such as Aadhaar Card and PAN Card solely for identity verification (KYC), regulatory compliance, and fraud prevention. Such data is securely stored in encrypted form and accessed only by authorized personnel. We do not collect or store Aadhaar biometric information.</p>
+    </div>
+
+    <div class="privacy-section">
+        <h2>8. User Consent</h2>
+        <p>By installing, registering, and using the AnimalKart application, users explicitly consent to the collection, storage, processing, and usage of their personal information as described in this Privacy Policy.</p>
+    </div>
+
+    <div class="privacy-section">
+        <h2>9. Third-Party Data Sharing</h2>
+        <p>We do not sell, rent, or trade user personal data. Information is shared strictly on a need-to-know basis with service partners such as insurance providers and internal verification teams for operational purposes only.</p>
+    </div>
+
+    <div class="privacy-section">
+        <h2>10. Data Deletion & Account Removal</h2>
+        <p>Users may request account deletion and personal data removal by contacting our support team at support@animalkart.in. Certain financial, transactional, and compliance-related records may be retained as required under applicable Indian laws.</p>
+    </div>
+
+    <div class="privacy-section">
+        <h2>11. Risk & Return Disclaimer</h2>
+        <p>All investment values, milk production figures, income projections, and asset appreciation details shown in the application are indicative estimates only and do not constitute guaranteed returns.</p>
+    </div>
+
     <div class="privacy-header" style="margin-top: 60px; border-top: 2px solid #e2e8f0; padding-top: 40px; border-bottom: none;">
         <h1>Terms and Conditions</h1>
     </div>
@@ -111,7 +136,7 @@ const DEFAULT_CONTENT = `
 
 const PrivacyPolicy: React.FC = () => {
     const [content, setContent] = useState<string>(() => {
-        return localStorage.getItem('privacy_policy_content') || DEFAULT_CONTENT;
+        return localStorage.getItem('privacy_policy_content_v1') || DEFAULT_CONTENT;
     });
     const [isEditing, setIsEditing] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -138,7 +163,7 @@ const PrivacyPolicy: React.FC = () => {
 
     const handleSave = () => {
         setContent(editContent);
-        localStorage.setItem('privacy_policy_content', editContent);
+        localStorage.setItem('privacy_policy_content_v1', editContent);
         setIsEditing(false);
         alert('Privacy Policy updated successfully!');
     };

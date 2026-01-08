@@ -87,7 +87,7 @@ const FAQS: FAQ[] = [
     {
         question: 'What is CPF?',
         answer:
-            'CPF (Cattle Protection Fund) is an insurance-like protection for your investment, covering risks associated with livestock health.',
+            'CPF (Cattle Protection Fund) is an protection for your investment, covering risks associated with livestock health.',
     },
     {
         question: 'How does the referral program work?',
