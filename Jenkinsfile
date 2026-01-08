@@ -11,11 +11,16 @@ pipeline {
         }
 
         stage('Deploy to Nginx') {
-            steps {
-                sh '''
-                  rm -rf /var/www/markwave/*
-                  cp -r * /var/www/markwave/
-                '''
+    steps {
+        sh '''
+          sudo rm -rf /var/www/markwave/*
+          sudo cp -r public/* /var/www/markwave/
+          sudo chown -R www-data:www-data /var/www/markwave
+          sudo chmod -R 755 /var/www/markwave
+        '''
+    }
+}
+
             }
         }
     }
