@@ -1,7 +1,7 @@
 export const API_CONFIG = {
   getBaseUrl: () => {
-    const corsUrl = process.env.REACT_APP_CORS_URL || 'https://cors-couipk45fa-el.a.run.app';
-    const productionUrl = process.env.REACT_APP_PRODUCTION_URL || 'https://markwave-live-apis-couipk45fa-el.a.run.app';
+    const corsUrl = process.env.REACT_APP_CORS_URL || 'https://cors-jn6cma3vvq-el.a.run.app';
+    const productionUrl = process.env.REACT_APP_PRODUCTION_URL || 'https://animalkart-live-apis-jn6cma3vvq-el.a.run.app';
     const baseUrl = `${corsUrl}/${productionUrl}`;
     return baseUrl;
   }
