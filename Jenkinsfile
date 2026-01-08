@@ -10,15 +10,12 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Deploy to Nginx') {
             steps {
-                echo "Build step running..."
-            }
-        }
-
-        stage('Test') {
-            steps {
-                echo "Test step running..."
+                sh '''
+                  rm -rf /var/www/markwave/*
+                  cp -r * /var/www/markwave/
+                '''
             }
         }
     }
