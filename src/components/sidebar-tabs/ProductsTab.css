@@ -194,9 +194,32 @@
     gap: 8px;
     position: relative;
     /* For absolute positioning of dropdown */
+    align-items: center;
+}
+
+.btn-manage {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    line-height: 1;
+}
+
+.btn-manage:hover {
+    background-color: #1d4ed8;
 }
 
 .menu-btn {
+    /* Legacy styling just in case, or we can remove/override */
     color: #6b7280;
 }
 

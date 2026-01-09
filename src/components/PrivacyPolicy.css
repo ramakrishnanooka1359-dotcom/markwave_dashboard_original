@@ -1,47 +1,55 @@
 /* Existing styles... */
 .privacy-container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 40px 20px;
-    background-color: #ffffff;
-    min-height: 100vh;
+    width: 100%;
+    margin: 0;
+    padding: 32px 40px;
+    /* Balanced padding */
     font-family: 'Inter', sans-serif;
     color: #334155;
+    background-color: #ffffff;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
+
+/* Removed privacy-card style to match Support page document flow */
 
 /* Editor-compatible styles - Targeting elements directly */
 .privacy-container .privacy-content h1,
 .privacy-container .ql-editor h1 {
-    font-size: 2.2rem;
+    font-size: 2.25rem;
+    /* Match Support H1 */
     color: #1e293b;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
+    /* Reduced from 32px */
     font-weight: 700;
-    text-align: center;
+    text-align: left;
+    /* Align text left for full-width reading */
     border-bottom: 2px solid #e2e8f0;
-    padding-bottom: 20px;
-    margin-top: 40px;
-}
-
-.privacy-container .privacy-content h1:first-child,
-.privacy-container .ql-editor h1:first-child {
+    padding-bottom: 16px;
+    /* Reduced from 24px */
     margin-top: 0;
 }
 
 .privacy-container .privacy-content p,
 .privacy-container .ql-editor p {
     color: #64748b;
-    font-size: 1rem;
-    margin-bottom: 15px;
-    line-height: 1.6;
+    font-size: 1.1rem;
+    /* Match Support p size */
+    margin-bottom: 12px;
+    /* Reduced from 20px */
+    line-height: 1.5;
 }
 
 .privacy-container .privacy-content h2,
 .privacy-container .ql-editor h2 {
-    font-size: 1.4rem;
-    color: #0f172a;
+    font-size: 1.8rem;
+    /* Match Support H2 */
+    color: #1e293b;
     margin-bottom: 12px;
+    /* Reduced from 24px */
     font-weight: 600;
-    margin-top: 30px;
+    margin-top: 32px;
+    /* Reduced from 48px */
 }
 
 .privacy-container .privacy-content ul,
@@ -49,26 +57,30 @@
     list-style-type: none;
     padding-left: 0;
     margin-bottom: 20px;
+    /* Reduced from 32px */
 }
 
 .privacy-container .privacy-content ul li,
 .privacy-container .ql-editor ul li {
-    margin-bottom: 12px;
-    padding-left: 20px;
+    margin-bottom: 8px;
+    /* Reduced from 16px */
+    padding-left: 28px;
     position: relative;
-    line-height: 1.6;
+    line-height: 1.5;
     color: #334155;
+    font-size: 1.05rem;
 }
 
 .privacy-container .privacy-content ul li::before,
 .privacy-container .ql-editor ul li::before {
     content: "•";
     color: #35d1f5;
+    /* Support page branding color */
     font-weight: bold;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     position: absolute;
     left: 0;
-    top: -2px;
+    top: -4px;
 }
 
 .privacy-container strong {
@@ -80,30 +92,35 @@
 .edit-button-container {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .edit-btn {
     background-color: #3b82f6;
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
     cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: background-color 0.2s;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .edit-btn:hover {
     background-color: #2563eb;
+    transform: translateY(-1px);
 }
 
 .editor-container {
     background: #fff;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid #e2e8f0;
     padding: 20px;
+    margin-bottom: 40px;
 }
 
 .editor-controls {
@@ -111,16 +128,19 @@
     justify-content: flex-end;
     gap: 12px;
     margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .save-btn {
     background-color: #10b981;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 8px 16px;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
+    font-size: 0.875rem;
 }
 
 .save-btn:hover {
@@ -131,10 +151,11 @@
     background-color: #ef4444;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 8px 16px;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
+    font-size: 0.875rem;
 }
 
 .cancel-btn:hover {
@@ -145,6 +166,20 @@
     min-height: 400px;
     font-size: 1rem;
     font-family: 'Inter', sans-serif;
+    border: none !important;
+}
+
+.privacy-editor .ql-toolbar {
+    border: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding-bottom: 12px;
+}
+
+/* Standalone override if needed */
+@media (max-width: 768px) {
+    .privacy-card {
+        padding: 24px;
+    }
 }
 
 /* Editor override - ensure bullet points show up in editor */

@@ -121,11 +121,11 @@ const ProductsTab: React.FC<ProductsTabProps> = () => {
                                     </div>
                                     <div className="product-actions">
                                         <button
-                                            className="action-btn menu-btn"
+                                            className="btn-manage"
                                             onClick={(e) => toggleMenu(product.id, e)}
                                             title="More Options"
                                         >
-                                            <MoreVertical size={18} />
+                                            <MoreVertical size={16} />
                                         </button>
 
                                         {activeMenuId === product.id && (

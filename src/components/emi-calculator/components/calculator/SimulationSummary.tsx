@@ -110,7 +110,7 @@ const SimulationSummary = () => {
     } = useEmi();
 
     // Specific logic: If CGF is enabled, show 0 to the user as requested.
-    const displayCgf = cgfEnabled ? 0 : totalCgf;
+    const displayCgf = !cgfEnabled ? 0 : totalCgf;
 
     return (
         <div className="space-y-12 mt-12 px-2 pb-8">
@@ -157,7 +157,7 @@ const SimulationSummary = () => {
                     icon={PawPrint}
                     iconColorClass="text-[#FBC02D]"
                 />
-                {/* <GenericCard
+                <GenericCard
                     label="Total CGF"
                     value={displayCgf}
                     colorClass="bg-[#EFEBE9] text-[#5D4037]" // Brown
@@ -165,7 +165,7 @@ const SimulationSummary = () => {
                     shadowClass="shadow-[0_4px_15px_rgb(93,64,55,0.1)]"
                     icon={Sprout}
                     iconColorClass="text-[#5D4037]"
-                /> */}
+                />
                 <GenericCard
                     label="Total Profit"
                     value={totalProfit}

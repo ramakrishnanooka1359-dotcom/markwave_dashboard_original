@@ -10,6 +10,7 @@ interface AdminDetailsModalProps {
     adminRole?: string;
     lastLogin?: string;
     presentLogin?: string;
+    adminReferralCode?: string;
 }
 
 const AdminDetailsModal: React.FC<AdminDetailsModalProps> = (props) => {
@@ -22,6 +23,7 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = (props) => {
     const adminRole = props.adminRole || auth.adminRole;
     const lastLogin = props.lastLogin || auth.lastLogin;
     const presentLogin = props.presentLogin || auth.presentLogin;
+    const adminReferralCode = props.adminReferralCode;
 
     const onClose = () => {
         dispatch(setShowAdminDetails(false));
@@ -54,6 +56,10 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = (props) => {
                     <div>
                         <div className="admin-detail-label">Role</div>
                         <div className="admin-detail-value">{adminRole}</div>
+                    </div>
+                    <div>
+                        <div className="admin-detail-label">Referral Code</div>
+                        <div className="admin-detail-value font-mono tracking-wider">{adminReferralCode || 'N/A'}</div>
                     </div>
                     <div>
                         <div className="admin-detail-label">Last Login</div>

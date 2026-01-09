@@ -23,7 +23,7 @@ const InputCard = () => {
         setLocalAmount(amount);
     }, [amount]);
 
-    // Debounce effect: sync local amount to global context after 2 seconds
+    // Debounce effect: sync local amount to global context after 0.5 seconds
     React.useEffect(() => {
         const timer = setTimeout(() => {
             if (localAmount !== amount) {
@@ -32,7 +32,7 @@ const InputCard = () => {
                 const calcUnits = Math.floor(localAmount / UNIT_COST);
                 setUnits(calcUnits >= 1 ? calcUnits : 1);
             }
-        }, 2000);
+        }, 500);
 
         return () => clearTimeout(timer);
     }, [localAmount, amount, setAmount, setUnits]);

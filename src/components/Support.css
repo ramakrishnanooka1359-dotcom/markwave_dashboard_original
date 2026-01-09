@@ -155,22 +155,36 @@ textarea.form-control {
 .faq-answer {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+    transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), padding 0.3s ease;
     background-color: #f8fafc;
+    padding: 0 20px;
 }
 
 .faq-answer.show {
-    max-height: 200px;
-    /* Approximate max height */
-    transition: max-height 0.3s ease-in-out;
+    max-height: 2000px;
+    padding: 20px;
     border-top: 1px solid #e2e8f0;
 }
 
 .faq-answer p {
-    padding: 16px 20px;
-    margin: 0;
+    margin: 0 0 10px 0;
     color: #64748b;
     line-height: 1.6;
+    white-space: pre-line;
+    /* Preserves line breaks for formatted text */
+}
+
+.faq-answer ul {
+    margin: 10px 0 10px 20px;
+    padding-left: 0;
+    list-style-position: outside;
+    color: #64748b;
+    list-style-type: disc;
+}
+
+.faq-answer li {
+    margin-bottom: 8px;
+    line-height: 1.5;
 }
 
 @media (max-width: 600px) {

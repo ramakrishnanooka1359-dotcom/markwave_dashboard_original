@@ -14,6 +14,9 @@ import BuffaloVisualizationTab from './components/sidebar-tabs/BuffaloVisualizat
 import EmiCalculatorTab from './components/sidebar-tabs/EmiCalculatorTab';
 import AcfCalculatorTab from './components/sidebar-tabs/AcfCalculatorTab';
 
+// Public Pages
+import ReferralLandingPage from './components/public/ReferralLandingPage';
+
 // Redux
 import { approveOrder, rejectOrder } from './store/slices/ordersSlice';
 
@@ -231,6 +234,12 @@ function App() {
             <React.Suspense fallback={<EmiCalculatorSkeleton />}>
               <AcfCalculatorTab />
             </React.Suspense>
+          </ConditionalLayoutWrapper>
+        } />
+
+        <Route path="/referral-landing" element={
+          <ConditionalLayoutWrapper>
+            <ReferralLandingPage />
           </ConditionalLayoutWrapper>
         } />
 

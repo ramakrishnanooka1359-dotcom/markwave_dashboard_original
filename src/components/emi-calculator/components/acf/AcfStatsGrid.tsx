@@ -3,6 +3,7 @@ import { useEmi } from '../../context/EmiContext';
 import { Wallet, Calendar, PiggyBank, Briefcase } from 'lucide-react';
 import { clsx } from 'clsx';
 import HoverGradientStatCard from '../stats/HoverGradientStatCard';
+import AssetProjectionCard from './AssetProjectionCard';
 
 const AcfStatsGrid = () => {
     const {
@@ -14,6 +15,7 @@ const AcfStatsGrid = () => {
         simulateHerd,
         calculateAssetValueFromSimulation,
         acfProjectionYear,
+        setAcfProjectionYear,
         formatCurrency
     } = useEmi();
 
@@ -33,13 +35,11 @@ const AcfStatsGrid = () => {
                 formatCurrency={formatCurrency}
             />
 
-            <HoverGradientStatCard
-                label="Asset Projection"
+            <AssetProjectionCard
                 value={projectedAssetValue}
-                prefix="₹"
-                icon={Briefcase} // Asset
-                color="teal" // 0xFF0891B2
-                secondaryText={`Year ${acfProjectionYear}`}
+                year={acfProjectionYear}
+                onYearChange={setAcfProjectionYear}
+                buffaloCount={(acfUnits * 2) + (offspringAges.length * acfUnits)}
                 formatCurrency={formatCurrency}
             />
 

@@ -418,6 +418,62 @@ export const EmiProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return adultValue + (singleUnitOffspringValue * pUnits);
     }
 
+    // --- Dynamic Interest Rate Logic ---
+    const OPTIMIZE_RATE = true; // Toggle for the feature
+
+    const findMaxSafeRate = (pAmount: number, pMonths: number, pUnits: number, pCpf: boolean, pCgf: boolean) => {
+        const LOW = 9.0;
+        const HIGH = 24.0;
+        const PRECISION = 0.1;
+
+        let left = LOW;
+        let right = HIGH;
+        let bestRate = LOW;
+
+        // Helper check: does this rate result in ZERO total loss?
+        const isSafe = (r: number) => {
+            const { rows } = simulateConfig(pAmount, r, pMonths, pUnits, pCpf, pCgf);
+            const tLoss = rows.reduce((acc, row) => acc + row.loss, 0);
+            return tLoss < 1.0; // Tolerance for floating point noise
+        };
+
+        // Quick check: is even 9% unsafe?
+        if (!isSafe(LOW)) return LOW; // Return min rate even if unsafe (per requirements)
+
+        // Binary Search for MAX rate
+        while (right - left > PRECISION) {
+            const mid = (left + right) / 2;
+            if (isSafe(mid)) {
+                bestRate = mid;
+                left = mid; // Try higher
+            } else {
+                right = mid; // Too high, go lower
+            }
+        }
+
+        return Number(bestRate.toFixed(1));
+    };
+
+    // Auto-adjust rate when parameters change
+    useEffect(() => {
+        if (OPTIMIZE_RATE) {
+            // We only trigger if the current rate setting would be INVALID or if amount changed.
+            // Actually, requirements say "change interest rate based on given amount".
+            // So we should re-calculate whenever amount/units/tenure changes.
+
+            // To prevent infinite loops if setRate triggers this again, we only set if different.
+            // However, we must be careful not to override user manual input if they want to override.
+            // But the requirement implies an automatic rule. Let's assume automatic enforcement.
+
+            const optimized = findMaxSafeRate(amount, months, units, cpfEnabled, cgfEnabled);
+            if (optimized !== rate) {
+                // console.log(`Optimizing Rate: ${rate} -> ${optimized} for Amt: ${amount}`);
+                setRate(optimized);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [amount, months, units, cpfEnabled, cgfEnabled]);
+
     // --- Effects to Update State ---
     useEffect(() => {
         const { rows, emi: calcEmi } = simulateConfig(amount, rate, months, units, cpfEnabled, cgfEnabled);

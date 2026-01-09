@@ -68,6 +68,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
   // Local State for Admin Name (dynamic fetch)
   const [displayAdminName, setDisplayAdminName] = useState(adminName);
+  const [adminReferralCode, setAdminReferralCode] = useState<string>('');
 
   // Local State for Sidebar Submenu
   const [isUserManagementOpen, setIsUserManagementOpen] = useState(
@@ -95,6 +96,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   else if (currentPath.includes('/orders')) activeTab = 'orders';
   else if (currentPath.includes('/privacy-policy')) activeTab = 'privacy';
   else if (currentPath.includes('/support')) activeTab = 'support';
+  else if (currentPath.includes('/referral-landing')) activeTab = 'referral-landing';
 
   const [formData, setFormData] = useState({
     mobile: '',
@@ -102,7 +104,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     last_name: '',
     refered_by_mobile: '',
     refered_by_name: '',
+    referral_code: '', // Added for API compliance
     role: 'Investor',
+    is_test: 'false',
   });
 
   const [editFormData, setEditFormData] = useState({
@@ -150,6 +154,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
           }
           if (fullName) {
             setDisplayAdminName(fullName);
+          }
+          if (user.referral_code) {
+            setAdminReferralCode(user.referral_code);
           }
         }
       } catch (error) {
@@ -202,7 +209,11 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     setIsFabExpanded(false);
     setFormData(prev => ({
       ...prev,
-      role: type === 'investor' ? 'Investor' : 'Employee'
+      role: type === 'investor' ? 'Investor' : 'Employee',
+      refered_by_mobile: adminMobile || '',
+      refered_by_name: displayAdminName || '',
+      referral_code: adminReferralCode || '',
+      is_test: 'false'
     }));
     dispatch(setReferralModalOpen(true));
   };
@@ -212,8 +223,13 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData({ ...formData, [name]: checked ? 'true' : 'false' });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const fetchReferrerDetails = async (mobile: string, isEditMode: boolean = false) => {
@@ -276,7 +292,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         last_name: '',
         refered_by_mobile: '',
         refered_by_name: '',
+        referral_code: '',
         role: 'Investor',
+        is_test: 'false',
       });
 
     } catch (error: any) {
@@ -602,6 +620,23 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
               </button>
             </li>
 
+            {/* Referral Landing Page */}
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'referral-landing' ? 'active-main' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/referral-landing', { state: { fromDashboard: true } });
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <UserCheck size={18} />
+                  <span className="nav-text">Referral Page</span>
+                </div>
+              </button>
+            </li>
+
+
             {/* Support */}
             <li>
               <button
@@ -651,7 +686,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                     className="fab-option-btn referral-employee"
                     onClick={() => handleChoiceSelection('investor')}
                   >
-                    Add Referral
+                    Add Investor
                   </button>
                   <button
                     className="fab-option-btn employee"
@@ -673,42 +708,46 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
         </main>
       </div>
 
-      {hasSession && (
-        <>
-          <ReferralModal
-            formData={formData}
-            onInputChange={handleInputChange}
-            onBlur={handleReferralMobileBlur}
-            onSubmit={handleSubmit}
-          />
+      {
+        hasSession && (
+          <>
+            <ReferralModal
+              formData={formData}
+              onInputChange={handleInputChange}
+              onBlur={handleReferralMobileBlur}
+              onSubmit={handleSubmit}
+              adminReferralCode={adminReferralCode}
+            />
 
-          <EditReferralModal
-            editFormData={editFormData}
-            onInputChange={handleEditInputChange}
-            onBlur={handleEditReferralMobileBlur}
-            onSubmit={handleEditSubmit}
-          />
+            <EditReferralModal
+              editFormData={editFormData}
+              onInputChange={handleEditInputChange}
+              onBlur={handleEditReferralMobileBlur}
+              onSubmit={handleEditSubmit}
+            />
 
-          <ImageNamesModal />
+            <ImageNamesModal />
 
-          <AdminDetailsModal
-            adminName={displayAdminName}
-            adminMobile={adminMobile}
-            adminRole={adminRole}
-            lastLogin={lastLogin}
-            presentLogin={presentLogin}
-          />
+            <AdminDetailsModal
+              adminName={displayAdminName}
+              adminMobile={adminMobile}
+              adminRole={adminRole}
+              lastLogin={lastLogin}
+              presentLogin={presentLogin}
+              adminReferralCode={adminReferralCode}
+            />
 
-          <RejectionModal />
+            <RejectionModal />
 
-          <LogoutModal
-            isOpen={isLogoutModalOpen}
-            onClose={() => setIsLogoutModalOpen(false)}
-            onConfirm={onLogout!}
-          />
-        </>
-      )}
-    </div>
+            <LogoutModal
+              isOpen={isLogoutModalOpen}
+              onClose={() => setIsLogoutModalOpen(false)}
+              onConfirm={onLogout!}
+            />
+          </>
+        )
+      }
+    </div >
   );
 };
 

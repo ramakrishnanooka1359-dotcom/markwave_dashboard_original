@@ -129,6 +129,27 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
     const [localSearch, setLocalSearch] = useState(searchQuery);
     const [expandedTrackerKeys, setExpandedTrackerKeys] = useState<Record<string, boolean>>({}); // NEW: Local state for individual expand/collapse
 
+    // Local state to track which specific order action is processing
+    const [processingAction, setProcessingAction] = useState<{ id: string; type: 'approve' | 'reject' } | null>(null);
+
+    const handleApproveWrapper = async (id: string) => {
+        setProcessingAction({ id, type: 'approve' });
+        try {
+            await handleApproveClick(id);
+        } finally {
+            setProcessingAction(null);
+        }
+    };
+
+    const handleRejectWrapper = async (id: string) => {
+        setProcessingAction({ id, type: 'reject' });
+        try {
+            await handleReject(id);
+        } finally {
+            setProcessingAction(null);
+        }
+    };
+
     useEffect(() => {
         setLocalSearch(searchQuery);
     }, [searchQuery]);
@@ -600,20 +621,20 @@ const OrdersTab: React.FC<OrdersTabProps> = ({
                                                 <div className="action-btn-container">
                                                     {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
                                                         <button
-                                                            onClick={() => handleApproveClick(unit.id)}
-                                                            className={`action-btn approve ${actionLoading ? 'loading' : ''}`}
-                                                            disabled={actionLoading}
+                                                            onClick={() => handleApproveWrapper(unit.id)}
+                                                            className={`action-btn approve ${processingAction?.id === unit.id && processingAction?.type === 'approve' ? 'loading' : ''}`}
+                                                            disabled={actionLoading || processingAction !== null}
                                                         >
-                                                            {actionLoading ? 'Processing...' : 'Approve'}
+                                                            {processingAction?.id === unit.id && processingAction?.type === 'approve' ? 'Processing...' : 'Approve'}
                                                         </button>
                                                     )}
                                                     {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
                                                         <button
-                                                            onClick={() => handleReject(unit.id)}
-                                                            className={`action-btn reject ${actionLoading ? 'loading' : ''}`}
-                                                            disabled={actionLoading}
+                                                            onClick={() => handleRejectWrapper(unit.id)}
+                                                            className={`action-btn reject ${processingAction?.id === unit.id && processingAction?.type === 'reject' ? 'loading' : ''}`}
+                                                            disabled={actionLoading || processingAction !== null}
                                                         >
-                                                            {actionLoading ? 'Processing...' : 'Reject'}
+                                                            {processingAction?.id === unit.id && processingAction?.type === 'reject' ? 'Processing...' : 'Reject'}
                                                         </button>
                                                     )}
                                                 </div>

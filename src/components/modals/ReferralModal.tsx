@@ -11,21 +11,20 @@ interface ReferralModalProps {
         last_name: string;
         refered_by_mobile: string;
         refered_by_name: string;
+        referral_code?: string;
         role: string;
+        is_test?: string;
     };
     onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     onBlur: () => void;
     onSubmit: (e: React.FormEvent) => void;
+    adminReferralCode?: string;
 }
 
 
 
-const ReferralModal: React.FC<ReferralModalProps> = ({
-    formData,
-    onInputChange,
-    onBlur,
-    onSubmit
-}) => {
+const ReferralModal: React.FC<ReferralModalProps> = (props) => {
+    const { formData, onInputChange, onBlur, onSubmit } = props;
     const dispatch = useAppDispatch();
     const showModal = useAppSelector((state: RootState) => state.ui.modals.referral);
 
@@ -55,28 +54,7 @@ const ReferralModal: React.FC<ReferralModalProps> = ({
                 {/* Form Content */}
                 <div className="referral-content">
                     <form onSubmit={onSubmit} className="referral-form">
-                        <div className="form-group">
-                            <label className="form-label">
-                                Role
-                            </label>
-                            <select
-                                name="role"
-                                value={formData.role}
-                                onChange={onInputChange}
-                                required
-                                className="form-input"
-                            >
-                                {formData.role === 'Investor' ? (
-                                    <option value="Investor">Investor</option>
-                                ) : (
-                                    <>
-                                        <option value="Employee">Employee</option>
-                                        <option value="Admin">Admin</option>
-                                        <option value="Superadmin">Superadmin</option>
-                                    </>
-                                )}
-                            </select>
-                        </div>
+
 
                         <div className="form-group">
                             <label className="form-label">
@@ -126,34 +104,25 @@ const ReferralModal: React.FC<ReferralModalProps> = ({
 
                         <div className="referrer-section">
                             <h4 className="section-title">Referrer Details</h4>
-                            <div className="form-group form-group-mb">
-                                <label className="form-label">
-                                    Referrer Mobile
-                                </label>
-                                <input
-                                    type="tel"
-                                    name="refered_by_mobile"
-                                    value={formData.refered_by_mobile}
-                                    onChange={onInputChange}
-                                    onBlur={onBlur}
-                                    required
-                                    placeholder="Enter referrer's mobile"
-                                    className="form-input"
-                                />
-                            </div>
                             <div className="form-group">
                                 <label className="form-label">
-                                    Referrer Name
+                                    Referral Code
                                 </label>
-                                <input
-                                    type="text"
-                                    name="refered_by_name"
-                                    value={formData.refered_by_name}
-                                    onChange={onInputChange}
-                                    required
-                                    placeholder="Enter referrer's name"
-                                    className="form-input"
-                                />
+                                <div className="p-3 bg-slate-100 rounded-lg text-slate-700 font-mono tracking-wider font-semibold border border-slate-200">
+                                    {props.adminReferralCode || 'N/A'}
+                                </div>
+                            </div>
+                            <div className="form-group mt-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="is_test"
+                                        checked={formData.is_test === 'true'}
+                                        onChange={onInputChange}
+                                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                    />
+                                    <span className="text-sm font-medium text-gray-700">Test Account</span>
+                                </label>
                             </div>
                         </div>
 
